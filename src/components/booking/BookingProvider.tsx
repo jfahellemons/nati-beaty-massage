@@ -1,20 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { track } from "@vercel/analytics";
-import { calUrl, site } from "@/content/site";
-import { ServicePicker } from "./ServicePicker";
-
-// The embed's own types reference an unpublished package, so keep ours minimal.
-type CalApi = (action: string, payload?: unknown) => void;
+import { createContext, useCallback, useContext, useState } from "react";
+import { BookingFlow } from "./BookingFlow";
 
 type BookingContextValue = {
-  /** Open the designed service picker (generic "Boek een Sessie" CTAs). */
+  /** Open the booking dialog at the service step (generic "Boek een Sessie" CTAs). */
   openPicker: () => void;
-  /** Open the Cal.com booking popup for one service. */
+  /** Open the booking dialog for one service. */
   book: (slug: string) => void;
-  /** Start loading the Cal.com embed early (hover/focus on a booking trigger). */
-  warm: () => void;
 };
 
 const BookingContext = createContext<BookingContextValue | null>(null);
@@ -26,83 +19,29 @@ export function useBooking() {
 }
 
 export function BookingProvider({ children }: { children: React.ReactNode }) {
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const calPromise = useRef<Promise<CalApi> | null>(null);
+  // `session` remounts the flow on every open, so it always starts fresh.
+  const [state, setState] = useState<{ open: boolean; slug: string | null; session: number }>({
+    open: false,
+    slug: null,
+    session: 0,
+  });
 
-  const loadCal = useCallback(() => {
-    if (!calPromise.current) {
-      calPromise.current = import("@calcom/embed-react").then(async ({ getCalApi }) => {
-        const cal = (await getCalApi({ namespace: site.cal.namespace })) as unknown as CalApi;
-        cal("ui", {
-          theme: "light",
-          cssVarsPerTheme: { light: { "cal-brand": site.cal.brandColor } },
-          hideEventTypeDetails: false,
-          layout: "month_view",
-        });
-        const onBooked = () => {
-          setToast("Uw aanvraag is verstuurd. Nataly bevestigt deze zo snel mogelijk.");
-          track("booking_requested");
-        };
-        cal("on", { action: "bookingSuccessfulV2", callback: onBooked });
-        return cal;
-      });
-      // A failed load must not block later retries.
-      calPromise.current.catch(() => {
-        calPromise.current = null;
-      });
-    }
-    return calPromise.current;
-  }, []);
-
-  const book = useCallback(
-    (slug: string) => {
-      setPickerOpen(false);
-      loadCal()
-        .then((cal) =>
-          cal("modal", { calLink: `${site.cal.username}/${slug}`, config: { layout: "month_view" } }),
-        )
-        .catch(() => {
-          // Embed blocked or offline: fall back to the hosted booking page.
-          window.location.href = calUrl(slug);
-        });
-    },
-    [loadCal],
+  const openPicker = useCallback(
+    () => setState((s) => ({ open: true, slug: null, session: s.session + 1 })),
+    [],
   );
-
-  const openPicker = useCallback(() => setPickerOpen(true), []);
-  const warm = useCallback(() => {
-    void loadCal().catch(() => {});
-  }, [loadCal]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = window.setTimeout(() => setToast(null), 8000);
-    return () => window.clearTimeout(t);
-  }, [toast]);
+  const book = useCallback(
+    (slug: string) => setState((s) => ({ open: true, slug, session: s.session + 1 })),
+    [],
+  );
+  const close = useCallback(() => setState((s) => ({ ...s, open: false })), []);
 
   return (
-    <BookingContext.Provider value={{ openPicker, book, warm }}>
+    <BookingContext.Provider value={{ openPicker, book }}>
       {children}
-      <ServicePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onPick={book} onWarm={warm} />
-      <div
-        aria-live="polite"
-        className="pointer-events-none fixed inset-x-3 top-3 z-[200] flex justify-center"
-      >
-        {toast && (
-          <p className="pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl bg-ink px-5 py-4 text-sm leading-snug text-ivory shadow-modal">
-            {toast}
-            <button
-              type="button"
-              onClick={() => setToast(null)}
-              className="-my-1 -mr-2 shrink-0 cursor-pointer rounded-full px-2 py-1 text-sand"
-              aria-label="Melding sluiten"
-            >
-              ✕
-            </button>
-          </p>
-        )}
-      </div>
+      {state.session > 0 && (
+        <BookingFlow key={state.session} open={state.open} initialSlug={state.slug} onClose={close} />
+      )}
     </BookingContext.Provider>
   );
 }

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage eyebrow="Voorwaarden" title="Algemene voorwaarden" updated="25 oktober 2026">
+    <LegalPage eyebrow="Voorwaarden" title="Algemene voorwaarden" updated="26 oktober 2026">
       <p>
         Deze voorwaarden gelden voor alle afspraken en behandelingen bij {site.name} in {site.city}.
       </p>
@@ -25,7 +25,10 @@ export default function TermsPage() {
           Uw aanvraag is pas definitief nadat Nataly deze heeft bevestigd. U ontvangt de bevestiging, met het
           adres van de salon, per e-mail.
         </li>
-        <li>Kan de afspraak niet doorgaan op het gekozen moment, dan neemt Nataly contact met u op.</li>
+        <li>
+          Kan Nataly u op het gekozen moment niet ontvangen, dan krijgt u daarover een e-mail. Een aanvraag
+          die niet binnen 24 uur wordt bevestigd, vervalt; ook dan krijgt u een e-mail.
+        </li>
       </ul>
 
       <h2>Annuleren en wijzigen</h2>
@@ -33,6 +36,9 @@ export default function TermsPage() {
         <li>
           <strong>Annuleren of wijzigen kan kosteloos tot 24 uur voor uw afspraak</strong>, via de link in uw
           bevestigingsmail, telefonisch ({site.phone.display}) of via WhatsApp.
+        </li>
+        <li>
+          Binnen 24 uur voor de afspraak kan annuleren niet meer online, alleen telefonisch of via WhatsApp.
         </li>
       </ul>
 

@@ -9,7 +9,7 @@ import imgPedicure from "@/assets/images/svc-pedicure.webp";
 export type Duration = 30 | 60 | 75 | 90;
 
 export type Service = {
-  /** Also the Cal.com event-type slug. */
+  /** Stable id, also stored on bookings (service_slug) in the shared database. */
   slug: string;
   title: string;
   description: string;

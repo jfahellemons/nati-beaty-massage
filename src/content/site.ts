@@ -27,20 +27,11 @@ export const site = {
     handle: "@beautymassagesnataly",
     url: "https://www.instagram.com/beautymassagesnataly",
   },
-  cal: {
-    username: process.env.NEXT_PUBLIC_CAL_USERNAME ?? "natalybeautymassages",
-    namespace: "nbm",
-    brandColor: "#94683F",
-  },
   cancellationNote: "Annuleren of wijzigen kan tot 24 uur voor uw afspraak.",
 } as const;
 
 export function whatsappUrl(message: string = site.whatsapp.message) {
   return `https://wa.me/${site.whatsapp.number}?text=${encodeURIComponent(message)}`;
-}
-
-export function calUrl(slug: string) {
-  return `https://cal.com/${site.cal.username}/${slug}`;
 }
 
 export const nav = [

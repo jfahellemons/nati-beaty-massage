@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Script from "next/script";
+import { Turnstile } from "@/components/Turnstile";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useSearchParams } from "next/navigation";
@@ -113,8 +113,6 @@ export function ReviewForm({
 
   useEffect(() => {
     if (state.status === "success") track("review_submitted");
-    // Turnstile tokens are single-use: get a fresh one after a failed attempt.
-    if (state.status === "error") (window as { turnstile?: { reset: () => void } }).turnstile?.reset();
   }, [state]);
 
   if (state.status === "success") {
@@ -245,17 +243,8 @@ export function ReviewForm({
         </div>
       </div>
 
-      {turnstileSiteKey && (
-        <>
-          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
-          <div
-            className="cf-turnstile"
-            data-sitekey={turnstileSiteKey}
-            data-language="nl"
-            data-size="flexible"
-          />
-        </>
-      )}
+      {/* A new attempt number gives a fresh (single-use) Turnstile token. */}
+      <Turnstile siteKey={turnstileSiteKey} resetKey={attempt} />
 
       <SubmitButton />
     </form>

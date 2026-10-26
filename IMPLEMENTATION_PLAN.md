@@ -1,16 +1,16 @@
-# Nataly Beauty Massages — Implementation Plan
+# Nataly Beauty Massages — Implementation Plan (website)
 
-Source design: `Nataly beauty massage website.zip` (Claude Design export)
-- `Nataly Beauty Massage.dc.html` — Home (one-page: hero, trust bar, services, contact, footer, booking modal)
-- `Over Mij.dc.html` — About page
-- `assets/` — logo, hero photo, portraits
-- `.image-slots.state.json` — the 9 images placed in the design (embedded as base64 WebP: `hero-card`, `svc-1`…`svc-7`, `final-img`, `about-portrait`)
-- `archive/` — older v1 versions (ignore)
-
+Source design: `Nataly beauty massage website.zip` (Claude Design export: `Nataly Beauty Massage.dc.html`, `Over Mij.dc.html`, `assets/`, `.image-slots.state.json`)
 Price list: `PHOTO-2026-10-25-21-24-17.jpg`
 
 Language: Dutch (`nl-NL`), formal "u" tone. Audience: local clients in Oosterhout, mostly on mobile.
-Domain: **natalybeautymassages.nl** · Booking: **Cal.com** · Reviews: **own review page** · Stack: **Next.js** (see §2)
+Domain: **natalybeautymassages.nl** · Booking: **own reservation system** (no Cal.com, no Google Calendar) · Stack: **Next.js 16** (§2)
+
+**Two apps, one database:**
+- **Website** (this repo, `nati-beaty-massage`): public pages, the client booking flow, the client's booking page, the review form. **This plan.**
+- **Beheer** (separate repo `nataly-beheer`, `beheer.natalybeautymassages.nl`): Nataly's management, all emails, scheduled jobs, review moderation, database schema. **See `IMPLEMENTATION_PLAN.md` in the `nataly-beheer` repo.**
+
+**Status (26 Oct 2026):** website phases W1–W5 are done (branch `feat/website-v1`): own booking dialog, client booking page, reviews without own email sending, Cal.com and Resend removed. Remaining: launch (§8, "Launch"). See "Implementation notes" below.
 
 ---
 
@@ -18,422 +18,306 @@ Domain: **natalybeautymassages.nl** · Booking: **Cal.com** · Reviews: **own re
 
 | Topic | Decision |
 |-------|----------|
-| Brand name | **Nataly Beauty Massages** everywhere (wordmark: "Nataly" + "beauty massages"), matching logo, price list, domain and Instagram |
-| Domain | **natalybeautymassages.nl** |
-| Phone | **06 1980 0612** → `tel:+31619800612` |
-| WhatsApp | Same number → `https://wa.me/31619800612` |
-| Public email | **natalypereyrav@gmail.com** (shown on the site; also the Cal.com account + booking notifications) |
-| Address | **Only "Oosterhout"** on the site. The full address is shared in the booking confirmation. |
-| Social | Instagram only: `https://www.instagram.com/beautymassagesnataly` (tracking parameter removed) |
-| Booking system | **Cal.com**, with **Nataly approving every booking first** ("requires confirmation") |
-| Durations | **The client chooses the duration** (30 / 60 / 75 / 90 min, where offered) when booking in Cal.com |
-| Cancellation | **Cancelling/changing is possible up to 24 hours before the appointment.** Shown as a note at every booking step (see §7, Phase 5) |
+| Brand name | **Nataly Beauty Massages** everywhere (wordmark "Nataly" + "beauty massages") |
+| Domain | **natalybeautymassages.nl** (website), **beheer.natalybeautymassages.nl** (management) |
+| Phone / WhatsApp | **06 1980 0612** → `tel:+31619800612`, `https://wa.me/31619800612` |
+| Email | **natalypereyrav@gmail.com**: shown on the site, receives requests and notifications, only login for the management app |
+| Address | **Only "Oosterhout"** on the site. The full address is sent in the booking confirmation |
+| Social | Instagram only: `https://www.instagram.com/beautymassagesnataly` |
+| Booking system | **Own reservation system.** Clients book on the website; Nataly manages in the separate management app. No Cal.com, no Google Calendar |
+| Approval | **Nataly approves every booking first.** A booking is a request until she accepts it |
+| Durations | **The client chooses the duration** (30 / 60 / 75 / 90 min, where offered) and sees the price per duration while booking |
+| Cancellation | **Cancelling is possible online up to 24 hours before the appointment**, enforced by the system; after that, clients are pointed to WhatsApp/phone |
 | VAT | All prices **incl. BTW** |
-| Prices on the site | Service cards show **"vanaf €…"** (lowest price). No full price table on the site; the price per duration is shown inside Cal.com when booking |
+| Prices on the site | Service cards show **"vanaf €…"**; the exact price per duration appears in the booking flow |
 | Services | 6 services (§0.1). Zwangerschapsmassage and Lifting wimpers are **excluded** |
-| Service name | "Therapeutic massage" → **"Therapeutische massage"** |
-| Reviews | **No reviews at launch**, but a **review page where clients can leave a review after a treatment** (§7, Phase 6). Approved reviews appear on the site. |
-| Review details | Link reaches clients via **all three**: automatic Cal.com email after the appointment, QR card in the salon, WhatsApp from Nataly. Shown as **first name + initial** ("Sanne V."). **No email field** on the review form. |
-| Subscription plans | Dropped |
-| Photos & logo | **The ones from the design** |
-| KvK | Not registered yet → launch without a KvK line; add later |
-| "Over Mij" footer | **Minimal footer** as in the design |
-| CMS | **No CMS at launch** (§2) |
+| Reviews | Review form on the website; Nataly approves in the management app; shown as **first name + initial**; **no email field** |
+| Review link | Via **all three**: automatic email after the appointment, QR card in the salon, WhatsApp from Nataly |
+| Photos & logo | The ones from the design |
+| KvK | Not registered yet → launch without a KvK line |
+| "Over Mij" footer | Minimal footer as in the design |
+| CMS | No CMS at launch (§2) |
 
-### 0.1 Services & prices (source of truth for `services.ts` and Cal.com)
+### 0.1 Services & prices (source of truth: `src/content/services.ts`)
 
-| Service | 30 min | 60 min | 75 min | 90 min | Card shows | Cal.com durations |
-|---------|-------:|-------:|-------:|-------:|-----------|-------------------|
-| Ontspannende craniofaciale massage | €35 | €55 | €65 | €90 | 30 – 90 min · vanaf €35 | 30 / 60 / 75 / 90 |
-| Ontspannende volledige lichaamsmassage | €40 | €55 | €65 | €90 | 30 – 90 min · vanaf €40 | 30 / 60 / 75 / 90 |
-| Therapeutische massage | €40 | €60 | €70 | €95 | 30 – 90 min · vanaf €40 | 30 / 60 / 75 / 90 |
-| Rug-, nek- en schoudermassage | €35 | €50 | €65 | — | 30 – 75 min · vanaf €35 | 30 / 60 / 75 |
-| Benen- en voetenmassage | €35 | €50 | €65 | — | 30 – 75 min · vanaf €35 | 30 / 60 / 75 |
-| Pedicure SPA | | €60 | | | 60 min · €60 | 60 (fixed) |
+| Service | slug | 30 min | 60 min | 75 min | 90 min | Card shows |
+|---------|------|-------:|-------:|-------:|-------:|-----------|
+| Therapeutische massage | `therapeutische-massage` | €40 | €60 | €70 | €95 | 30 – 90 min · vanaf €40 |
+| Ontspannende volledige lichaamsmassage | `volledige-lichaamsmassage` | €40 | €55 | €65 | €90 | 30 – 90 min · vanaf €40 |
+| Ontspannende craniofaciale massage | `craniofaciale-massage` | €35 | €55 | €65 | €90 | 30 – 90 min · vanaf €35 |
+| Rug-, nek- en schoudermassage | `rug-nek-schoudermassage` | €35 | €50 | €65 | — | 30 – 75 min · vanaf €35 |
+| Benen- en voetenmassage | `benen-voetenmassage` | €35 | €50 | €65 | — | 30 – 75 min · vanaf €35 |
+| Pedicure SPA | `pedicure-spa` | | €60 | | | 60 min · €60 |
 
-Changes vs. the design's placeholder data: all prices/durations replaced; "Therapeutic massage" renamed; Lifting wimpers removed (it's in the design, not on the price list); Ontspannende zwangerschapsmassage left out (it's on the price list but not offered on the site).
-
-> Note: the printed price list still shows the zwangerschapsmassage and the English "Therapeutic massage". Update it if it's shared alongside the site.
+> The management app needs the same service list (titles, durations, prices) for manual bookings and emails. The website's `services.ts` stays the source; a copy lives in `nataly-beheer` and must be updated together (checklist in both READMEs).
+>
+> The printed price list still shows the zwangerschapsmassage and the English "Therapeutic massage". Update it if it's shared alongside the site.
 
 ---
 
-## 1. Design review
+## 1. Design review (summary)
 
-### What's strong
-- Coherent warm, premium visual language: cream/espresso palette, bronze accent, Jost + Cormorant Garamond italic pairing.
-- Clear conversion focus: "Boek een Sessie" is present in the header, hero, services, contact, the final image block, a sticky mobile bar and a floating WhatsApp button.
-- Responsiveness has been thought about: mobile menu, bottom-sheet modal on mobile, `dvh` + `safe-area-inset` handling, fluid type with `clamp()`.
-- Small, well-scoped site (2 main pages, 6 services).
-- The design's copy ("Nataly bevestigt uw afspraak persoonlijk") already matches the chosen Cal.com approval mode.
+**Strong:** coherent warm, premium look (cream/espresso, bronze accent, Jost + Cormorant Garamond); booking CTA everywhere; responsiveness already considered (bottom-sheet modal, `dvh`, safe areas, fluid type).
 
-### Issues to fix during implementation
+**Fixed in the build:**
 
-| # | Issue | Fix |
-|---|-------|-----|
-| 1 | **Booking form doesn't send anything**: submitting only changes what's shown on screen. | Replaced by **Cal.com** booking (real availability, approval by Nataly, confirmation emails, calendar sync). |
-| 2 | **Responsiveness is driven by JS** (`window.innerWidth < 860`). Causes layout flash and wrong layout before JS loads. | Pure CSS media queries. JS only for interactivity. |
-| 3 | **Clickable `<span>`/`<div>` elements** for nav, logo and footer links. Not keyboard- or screen-reader-accessible. | Real `<a href>` for navigation, `<button>` for actions. |
-| 4 | **Modal accessibility**: no focus trap, focus isn't returned, mobile menu doesn't close on Escape. | Native `<dialog>` or Radix UI Dialog (focus trap, Escape, return focus, scroll lock). |
-| 5 | **Inconsistent booking entry on "Over Mij"**: its CTAs link to `#contact` instead of booking. | Every "Boek" CTA on every page opens the same booking flow. |
-| 6 | **Placeholder content**: fake phone/WhatsApp/email, footer legal links not linked. | Replace with the confirmed data (§0); add privacy/terms pages. |
-| 7 | **Privacy/GDPR**: booking and reviews collect personal data (possibly health info for therapeutic massage). | Privacy policy naming Cal.com, Supabase, Resend and Vercel as processors; no medical questions in forms; cookieless analytics. |
-| 8 | **Dead code in the design**: subscription `PLANS`, `REVIEWS`, avatar `faces`, custom dropdown. | Leave out. ⚠️ The review texts/names in the design are **invented** and must never be published. Real reviews come only from the new review page. |
-| 9 | **Mixed language**: "Therapeutic massage". | → "Therapeutische massage". |
-| 10 | **Hero image** is a portrait photo (992×1600) cropped into a ~62%-wide landscape area on desktop. It will look soft on large/retina screens. | Use the design photo as decided; `next/image` with tuned `object-position` per breakpoint. A higher-res original can be swapped in later without code changes. |
-| 11 | **Logo** is a 375×338 PNG and fuzzy on retina. | Keep the design logo; trace it to SVG with the identical look (also favicon + OG image). |
-| 12 | **Inline styles everywhere**, with colours repeated as hex literals. | Design tokens (§4). |
-| 13 | **Brand name**: the design's wordmark says "beauty massage". | → "beauty massages". |
-| 14 | **Service grid** was designed for 7 services; there are now 6. | Advice card spans 2 columns (§5). |
+| Issue in the design | Fix |
+|---|---|
+| Booking form sent nothing | Own reservation system (§7) |
+| Layout switched by JS (`innerWidth < 860`) | Pure CSS breakpoints |
+| Clickable `<span>`/`<div>` | Real links and buttons |
+| Modal without focus handling | Native `<dialog>` |
+| "Over Mij" CTAs went to `#contact` | Every CTA opens the same booking flow |
+| Placeholder phone/email, dead legal links | Real data, privacy + terms pages |
+| Invented reviews in design code | Removed; only real, moderated reviews |
+| "Therapeutic massage", "beauty massage" | "Therapeutische massage", "beauty massages" |
+| Grid designed for 7 services | 6 services + advice card spanning 2 columns |
 
 ---
 
-## 2. Stack
+## 2. Stack (website)
 
-### **Next.js 15 (App Router) + React 19 + Tailwind CSS v4 + TypeScript, on Vercel. Booking via Cal.com, reviews via Supabase + Resend**
+**Next.js 16 (App Router, Cache Components) + React 19 + Tailwind CSS v4 + TypeScript, on Vercel. Data in the shared Supabase database.**
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| Framework | **Next.js 15, App Router**, all marketing pages statically prerendered | Static HTML on the CDN for top SEO/Core Web Vitals; server code available for the review form. |
-| Rendering model | **React Server Components by default**; `"use client"` only for interactive leaves | Only header-scroll state, mobile menu, service picker, Cal.com trigger and review form hydrate. |
-| Styling | **Tailwind CSS v4** with `@theme` tokens (+ `clsx`/`tailwind-merge`) | Maps 1:1 onto the design tokens; fast responsive variants. |
-| Booking | **Cal.com** + **`@calcom/embed-react`** (popup embed, lazy-loaded) | Real-time availability from Nataly's Google Calendar, approval step, automatic emails, Dutch locale, brand colour. |
-| Reviews: storage | **Supabase** (Postgres, EU region) | Small `reviews` table with a `pending`/`approved` status. Row Level Security: the public can only read approved reviews; writes go through the server only. Free tier is plenty. |
-| Reviews: form | **Server Action** + `useActionState` + **Zod** | Type-safe, validates on client and server, and works before hydration. |
-| Reviews: moderation | **Resend** email to Nataly with **"Publiceren" / "Verwijderen"** buttons (signed one-time links) | Nataly approves from her phone in one tap. No admin panel or login to build or maintain. |
-| Spam protection | Honeypot + **Cloudflare Turnstile** (invisible) + rate limit | Protects the public review form. |
-| Dialog / menu primitives | Native `<dialog>` (or Radix UI Dialog) | Service-picker sheet and mobile menu. |
-| Images | **`next/image`** | AVIF/WebP, `srcset`/`sizes`, no layout shift; `priority` on hero. |
-| Fonts | **`next/font/google`** (Jost, Cormorant Garamond) | Self-hosted at build time (GDPR-friendly), no layout shift. |
-| Content | Typed data files (`src/content/services.ts`, `site.ts`) | Services, prices and contact details in one place. |
-| SEO | Next **Metadata API**, `app/sitemap.ts`, `app/robots.ts`, `app/opengraph-image.tsx` | Built-in, typed. |
-| Hosting | **Vercel** | Native Next.js host, preview deploys, image optimisation. |
-| Analytics | **Vercel Web Analytics** + Speed Insights | Cookieless, so no cookie banner. Tracks `bookingRequested` and `reviewSubmitted` events. |
-| Quality | ESLint (`next/core-web-vitals`), Prettier, `tsc --noEmit`, Playwright, Lighthouse CI | Production-grade. |
+| Framework | **Next.js 16**, marketing pages statically prerendered | Fast, SEO-friendly; server code for booking requests and reviews |
+| Rendering | Server Components by default; `"use client"` only for interactive parts | Small client JS |
+| Styling | **Tailwind CSS v4**, tokens in `src/app/globals.css` | Matches the design 1:1 |
+| Database | **Supabase Postgres (EU region)**, shared with the management app | Schema and migrations are owned by `nataly-beheer`; this repo uses generated types |
+| Server logic | **Server Actions** + **Zod** | Typed, validated on client and server |
+| Date/time | **`date-fns` + `@date-fns/tz`**, stored in UTC, calculated in `Europe/Amsterdam` | Correct across summer/winter time |
+| Emails | **None sent from the website.** Database triggers queue them; the management app sends them | One place for templates and retries |
+| Spam protection | Honeypot + **Cloudflare Turnstile** + rate limit | On the booking and review forms |
+| Images / fonts | `next/image`, `next/font/google` | Optimised, self-hosted fonts |
+| SEO | Metadata API, JSON-LD, sitemap, robots, OG image | Built in |
+| Analytics | Vercel Web Analytics + Speed Insights | Cookieless; events `booking_requested`, `review_submitted` |
+| Quality | ESLint, Prettier, `tsc`, Vitest (slot logic), Playwright (flows) | |
 
-**Trade-offs to manage**
-- Next.js ships the React runtime (~90–100 KB gzipped). Keep sections as Server Components.
-- The Cal.com embed is heavy. **Load it only on first interaction** (hover/focus/tap on a "Boek" button, or on idle) so it never affects LCP.
-- The home page stays static. When Nataly approves a review, the approve endpoint calls `revalidateTag('reviews')` so the new review appears within seconds without a rebuild.
+**Removed from the website:** Cal.com embed, Resend, React Email, review moderation pages and tokens (all move to the management app or disappear).
 
-### CMS: **no CMS at launch**
-- Availability, days off and booking approvals are managed by Nataly in the **Cal.com app**. Review approval is one tap in an email.
-- Texts and prices change rarely; price changes are a 5-minute edit in `services.ts` plus the Cal.com event description (README checklist).
-- If she later wants to edit texts herself: add **Keystatic** (free, git-based, ~1 day).
+**CMS:** none at launch. Prices change in `services.ts` (+ the copy in `nataly-beheer`). Working hours, days off and booking settings are managed by Nataly in the management app.
 
 ---
 
-## 3. Information architecture & routes
+## 3. Routes (website)
 
 ```
-/                       Home (one-page)
-  #behandelingen        Services
-  #ervaringen           Reviews (only rendered once ≥ 1 review is approved)
-  #contact              Contact / plan your visit
-/over-mij               About Nataly
-/review                 "Deel uw ervaring": review form (linked after a treatment; noindex)
-/review/bedankt         Thank-you state (or inline success view)
-/api/reviews/moderate   Signed approve/reject links from the moderation email (GET → confirm page → POST)
-/privacy                Privacybeleid
-/algemene-voorwaarden   Algemene voorwaarden (cancellation policy; KvK added once registered)
-/404                    Not found (app/not-found.tsx)
-?boek=<slug>            Opens the Cal.com popup for that service on any page (Instagram bio / WhatsApp)
+/                            Home: hero, trust bar, #behandelingen, #ervaringen (once reviews exist), #contact
+/over-mij                    About Nataly
+/afspraak                    No-JS fallback of the booking flow (?dienst=<slug>)          noindex
+/afspraak/[id]?token=…       Client's booking page: status, details, cancel (until 24 h)  noindex
+/review                      Review form (?behandeling=<slug> prefills)                  noindex
+/api/revalidate              Called by the management app to refresh cached reviews (secret)
+/privacy, /algemene-voorwaarden, 404
+?boek=<slug>                 Opens the booking flow for that service on any page
 ```
 
-Header nav (as designed): **Over Mij · Behandelingen · Contact** + "Boek een Sessie" CTA. The review page is not in the main nav; it gets a footer link ("Deel uw ervaring") and is reached mainly via the post-treatment link/QR code.
+Removed: `/review/beheer` (moves to the management app).
 
 ---
 
-## 4. Design tokens (extracted from the design)
+## 4. Design tokens
 
-### Colours
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `cream` | `#FAF5EF` | Page background, modal bg |
-| `ivory` | `#FFFDFA` | Cards, alt sections, light buttons |
-| `ink` | `#2A211C` | Body text, dark cards |
-| `espresso` | `#1E1713` | Hero bg, footer |
-| `bronze` | `#B08358` | Primary button bg, accents, icons, review stars |
-| `bronze-deep` | `#94683F` | Links, eyebrow text, button hover, icon circles; **Cal.com brand colour** |
-| `bronze-darker` | `#6E4B2C` / `#7E5934` | Link hover, submit hover |
-| `sand` | `#E9CFAE` | Italic accent on dark |
-| `sand-soft` | `#E2C7A6`, `#C9A27E` | Eyebrows/sub-labels on dark |
-| `line` | `#EADFD3` | Borders, dividers |
-| `line-soft` | `#F0E6DB`, `#EFE5DA` | Card borders, inner dividers |
-| `chip` | `#F3E7DA`, `#F6EDE3` | Icon chips, selected state |
-| `muted` | `#6B5C50` | Secondary text |
-| `muted-2` | `#7A6A5E` | Meta text (duration, labels) |
-| `on-dark` | `#D9CCBF`, `#E8DDD2` | Body text on dark |
-| `error` | `#B4533A` | Validation |
-| `whatsapp` | `#25D366` | WhatsApp FAB |
+Implemented in `src/app/globals.css` (`@theme`); the management app copies the same `@theme` block. Key values:
 
-> Action: verify contrast. `#94683F` on `#FAF5EF` is borderline for 12–13px eyebrow text, and so is `#A8998C` on `#1E1713` (footer meta). Darken slightly if they fail WCAG AA.
-
-### Typography
-- **Sans**: Jost 300/400/500 for body, UI and the H1/H2 base.
-- **Serif**: Cormorant Garamond 400/500 + italic for the logo wordmark, italic accent words, prices, titles on dark and review quotes.
-- Fluid scale (from design):
-  - H1 hero `clamp(42px, 6vw, 82px)`, weight 300, lh 1.02, tracking −0.02em
-  - H1 about `clamp(40px, 5.2vw, 68px)`
-  - H2 `clamp(34px, 4.2vw, 54px)`, lh 1.08
-  - Lead `clamp(16px, 1.4vw, 18px)`, lh 1.65
-  - Eyebrow 12px, uppercase, tracking 0.24–0.28em, with 28px leading rule
-  - Price 26px serif ("vanaf" in 13px sans before it); card title 19px/500
-
-### Shape, spacing, effects
-- Radii: pill `999px`; cards `26px`; image `18px`; dark CTA panels `30–32px`; section top `44px`; inputs `14px`.
-- Containers: header `1320px`, content `1192px`.
-- Section padding: `clamp(72px, 9vw, 120px)` vertical, `clamp(20px, 5vw, 64px)` horizontal.
-- Shadows: card hover `0 20px 50px rgba(110,75,44,.12)` + `translateY(-3px)`; modal `0 30px 80px rgba(0,0,0,.3)`.
-- Glass: `backdrop-filter: blur(14–16px)` on header, hero card, mobile CTA bar.
-
-### Signature component: **Pill button with arrow circle**
-Used ~10× in 5 variants. One `<PillButton>` with `variant` (`bronze` | `ivory` | `outline` | `ghost-dark` | `deep`), `size` (`sm` | `md` | `lg`), rendering `<Link>`/`<a>` or `<button>`.
+- Colours: cream `#FAF5EF`, ivory `#FFFDFA`, ink `#2A211C`, espresso `#1E1713`, bronze `#B08358`, bronze-deep `#94683F`, sand `#E9CFAE`, line `#EADFD3`, muted `#6B5C50`, error `#B4533A`, WhatsApp `#25D366`.
+- Fonts: Jost 300/400/500 (sans), Cormorant Garamond 400/500 + italic (serif accents, prices).
+- Radii: pills 999px, cards 26px, images 18px, dark panels 30–32px, inputs 14px.
+- Breakpoints (all px; mixing px and rem breaks Tailwind's order): sm 640, md 860, lg 1100, xl 1320.
+- Signature component: pill button with arrow circle (`src/components/ui/pill.tsx`).
 
 ---
 
-## 5. Responsive strategy
+## 5. Responsive strategy (booking flow)
 
-Mobile-first. Breakpoints aligned with the design's thresholds:
+| Width | Behaviour |
+|---|---|
+| < 860px | Booking flow in a **bottom sheet** (max 92dvh) with step header, back button and a sticky footer ("Gekozen: … · €…" + Volgende). Month calendar full width; time slots in a 3-column grid of 44px+ buttons |
+| ≥ 860px | Booking flow in the **centred dialog** (max ~640px). Calendar and time slots side by side from the date step |
 
-| Name | Min width | Design behaviour |
-|------|-----------|------------------|
-| base | 0 | Single column; hamburger menu; sticky bottom CTA bar; WhatsApp FAB raised to 86px; full-bleed hero with vertical scrim; service picker = bottom sheet; Cal.com popup full-screen. |
-| `sm` | 640px | Services 2 columns: 6 cards + advice card spanning 2 columns = 4 full rows. |
-| `md` | 860px | **Desktop header** (pill nav + CTA), no bottom bar, split hero (photo 62% with left fade mask), glass hero card, service picker = centred dialog (max 580px). |
-| `lg` | 1100px | Services 4 columns: row 1 = 4 cards, row 2 = 2 cards + advice card spanning 2 columns (horizontal layout) → two full rows. |
-| `xl` | 1320px | Max container width reached. |
-
-Rules:
-- No JS-based layout switching. Hide/show with CSS (`md:hidden`, `hidden md:flex`).
-- `auto-fit/minmax(min(100%, X), 1fr)` grids where the design already uses them.
-- `100dvh`/`svh` for hero height; `env(safe-area-inset-bottom)` on sticky bar and sheets.
-- Touch targets ≥ 44px; inputs at 16px font-size (no iOS zoom). Star-rating buttons ≥ 44px.
-- Test matrix: 360, 390, 414, 768, 1024, 1280, 1440, 1920 px; iOS Safari, Android Chrome, desktop Chrome/Safari/Firefox/Edge; landscape phones. Includes the Cal.com popup and the review form.
+Everything else as built: CSS-only layout switching, safe-area insets, touch targets ≥ 44px, 16px inputs. Test at 360, 390, 768, 1024, 1440 px on iOS Safari and Android Chrome.
 
 ---
 
-## 6. Component inventory
+## 6. Architecture (website)
 
-`(S)` = Server Component (no client JS) · `(C)` = Client Component (`"use client"`)
-
+### Keep (already built)
 ```
-src/
-  app/
-    layout.tsx                (S) <html lang="nl">, fonts, metadata defaults, JSON-LD, analytics,
-                                  BookingProvider + ServicePicker
-    page.tsx                  (S) Home (full footer)
-    over-mij/page.tsx         (S) About (minimal footer)
-    review/page.tsx           (S) review page shell + ReviewForm (noindex)
-    api/reviews/moderate/route.ts   verify signed token → approve/reject → revalidateTag('reviews')
-    privacy/page.tsx          (S)
-    algemene-voorwaarden/page.tsx (S)
-    not-found.tsx             (S)
-    sitemap.ts, robots.ts
-    opengraph-image.tsx
-    icon.svg, apple-icon.png
-    globals.css               Tailwind v4 @theme tokens, base styles
-  components/
-    layout/
-      SiteHeader.tsx          (C) transparent→solid on scroll (home), always solid (subpages); hosts MobileMenu
-      MobileMenu.tsx          (C)
-      SiteFooter.tsx          (S) full footer (home): nav, services, contact, Instagram, "Deel uw ervaring"
-      MinimalFooter.tsx       (S) "© … · Oosterhout" + "Terug naar home" (Over Mij, review page)
-      MobileCtaBar.tsx        (S) <md only; contains a BookButton
-      WhatsAppFab.tsx         (S)
-      Logo.tsx                (S) SVG mark + "Nataly / beauty massages" wordmark, light/dark variants
-    ui/
-      PillButton.tsx          (S)
-      Eyebrow.tsx             (S)
-      SectionHeading.tsx      (S) H2 with italic serif accent word slot
-      Icon.tsx                (S) inline SVG paths from the design (+ Instagram, star)
-      CancellationNote.tsx    (S) "Annuleren of wijzigen kan tot 24 uur voor uw afspraak." (reused everywhere)
-    home/
-      Hero.tsx                (S)
-      TrustBar.tsx            (S)
-      ServicesSection.tsx     (S)
-      ServiceCard.tsx         (S) "30 – 90 min" + "vanaf €35"; "Boek Nu" = BookButton
-      AdviceCard.tsx          (S) wide dark card; "Vraag Advies" opens WhatsApp
-      ReviewsSection.tsx      (S) approved reviews (cached, tag 'reviews'); hidden when empty
-      ContactSection.tsx      (S) phone, email, hours, "Oosterhout", Instagram + dark booking CTA panel
-      FinalImageCta.tsx       (S)
-    about/
-      AboutIntro.tsx, Pillars.tsx, Quote.tsx, CtaBanner.tsx   (S)
-    booking/
-      BookingProvider.tsx     (C) context: openPicker() / book(slug); lazy-loads Cal embed; handles ?boek=
-      BookButton.tsx          (C) <a href="https://cal.com/<user>/<slug>"> enhanced to open the popup
-      ServicePicker.tsx       (C) designed sheet/dialog: choose a service → Cal.com popup; shows CancellationNote
-      cal.ts                  Cal.com namespace + UI config
-    reviews/
-      ReviewForm.tsx          (C) name, treatment, star rating, text, consent; useActionState; Turnstile
-      StarRating.tsx          (C) accessible radio-group of 5 stars
-      ReviewCard.tsx          (S)
-  lib/
-    reviews/
-      schema.ts               Zod schema (shared client + server)
-      actions.ts              "use server": submitReview: honeypot, Turnstile, rate limit, insert pending, email Nataly
-      queries.ts              getApprovedReviews() with unstable_cache / fetch tag 'reviews'
-      tokens.ts               HMAC-signed approve/reject tokens (expiring)
-    supabase.ts               server-only client (service-role key never sent to the browser)
-    cn.ts
-  content/
-    services.ts               title, slug, desc, prices: Partial<Record<30|60|75|90, number>>, icon, image, calSlug
-                              (card text "30 – 90 min" and "vanaf €35" derived from prices)
-    site.ts                   name, phone, whatsapp, email, city, hours, instagram, calUsername
-  emails/
-    ReviewModeration.tsx      React Email: review text + "Publiceren" / "Verwijderen" buttons
-  assets/images/
-public/
-  logo-mark.svg
-supabase/
-  migrations/0001_reviews.sql reviews table + RLS policies
+src/app/            layout, home, over-mij, review, privacy, terms, 404, sitemap, robots, OG image
+src/components/     layout/*, home/*, ui/*, reviews/{ReviewForm, Stars}
+src/content/        site.ts, services.ts
+src/lib/            supabase.ts, cn.ts, reviews/{schema, queries}
 ```
 
-**`reviews` table:** `id`, `created_at`, `name` (first name + initial), `service_slug`, `rating` (1–5), `text`, `consent_publish` (bool), `status` (`pending` | `approved` | `rejected`), `approved_at`. RLS: anon `select` only where `status = 'approved'`; no anon insert/update (server-side only).
+### Remove
+- `@calcom/embed-react`, `resend`, `@react-email/components` dependencies.
+- Cal.com loading in `BookingProvider`; `calUrl()` and `cal` settings in `site.ts`.
+- `src/app/review/beheer/`, `src/emails/`, `src/lib/reviews/tokens.ts`, moderation code and email sending in `src/lib/reviews/actions.ts` (the trigger now queues the moderation email).
+- `supabase/migrations/` (moves to `nataly-beheer`).
+
+### Add / change
+```
+src/components/booking/
+  BookingProvider.tsx     (C) open(slug?) → opens BookingFlow; keeps ?boek=
+  BookButton.tsx          (C) without JS: links to /afspraak?dienst=<slug>
+  BookingFlow.tsx         (C) multi-step sheet/dialog (§7.1)
+  steps/                  ServiceStep, DurationStep, DateStep (MonthCalendar), TimeStep, DetailsStep, ReviewStep, DoneStep
+src/app/afspraak/page.tsx            no-JS fallback
+src/app/afspraak/[id]/page.tsx       client's booking page + cancel
+src/app/api/revalidate/route.ts      revalidateTag('reviews', 'max') with secret
+src/lib/booking/
+  slots.ts                pure free-time calculation (unit-tested)
+  schema.ts               Zod schemas
+  actions.ts              "use server": getMonthAvailability, getDaySlots, requestBooking, cancelBooking
+  queries.ts              server-only data access
+src/lib/database.types.ts generated in nataly-beheer, copied here
+```
 
 ---
 
-## 7. Implementation phases
+## 7. Booking on the website
 
-### Phase 0: Project setup (½ day)
-- [ ] `npx create-next-app@latest` (TypeScript strict, App Router, `src/` dir, Tailwind v4, ESLint, Turbopack); add Prettier + `prettier-plugin-tailwindcss`.
-- [ ] Install `@calcom/embed-react`, `@supabase/supabase-js`, `zod`, `resend`, `@react-email/components`, `clsx`, `tailwind-merge`.
-- [ ] Create Supabase project (EU region) + Resend account; connect repo to Vercel.
-- [ ] `.env.example`: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_CAL_USERNAME`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `REVIEW_NOTIFY_EMAIL=natalypereyrav@gmail.com`, `REVIEW_TOKEN_SECRET`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`.
+### 7.1 Client flow
+1. **Behandeling**: the 6 services with icon, duration range and "vanaf" price (skipped when opened from a service card or `?boek=`).
+2. **Duur**: options with price per duration, e.g. "60 min · €60" (skipped for Pedicure SPA).
+3. **Datum**: month calendar from today; days without free time disabled; within the 60-day window.
+4. **Tijd**: free start times in 15-minute steps, grouped "Ochtend / Middag / Avond".
+5. **Gegevens**: voornaam*, achternaam*, e-mailadres*, telefoonnummer*, "Opmerkingen of wensen" (optional, max 500, hint: no medical details), consent to terms and privacy*.
+6. **Overzicht**: service, duration, date, time, price, cancellation note → **"Aanvraag versturen"**.
+7. **Verstuurd**: "Uw aanvraag is verstuurd. Nataly bevestigt deze persoonlijk, meestal binnen enkele uren. U ontvangt een e-mail ter bevestiging."
 
-### Phase 1: Assets & tokens (½–1 day)
-- [ ] Extract the 9 embedded WebP images from `.image-slots.state.json` into `src/assets/images/` with meaningful names (the `svc-*` images for the removed wimpers service are dropped).
-- [ ] Copy `hero.jpeg`, `nataly-portrait.png`, `nataly-towel.png` from the design.
-- [ ] Trace the design logo to `logo-mark.svg` (identical look); generate favicon set + OG image.
-- [ ] Fonts via `next/font/google` (Jost 300/400/500, Cormorant Garamond 400/500 + italic, Latin subset) as `--font-sans` / `--font-serif`.
-- [ ] Define all tokens from §4 in `globals.css` `@theme`.
+If the time was taken in the meantime, the database refuses it; the flow returns to step 4 with "Dit tijdstip is net bezet. Kies een ander tijdstip." and refreshed times.
 
-### Phase 2: Layout shell (1 day)
-- [ ] Root `layout.tsx` with `lang="nl"`, default `metadata`, skip-link.
-- [ ] `SiteHeader` (client): logo `<Link>`, pill nav, CTA; transparent over hero on home, solid after 40px scroll (IntersectionObserver on a sentinel); solid on subpages (`usePathname()`); state via data-attributes so server HTML is correct before hydration.
-- [ ] `MobileMenu`: `aria-expanded`, Escape closes, closes on link click, body scroll lock.
-- [ ] `SiteFooter` (home) and `MinimalFooter` (Over Mij, review page), with links to privacy/terms and "Deel uw ervaring".
-- [ ] `MobileCtaBar` + `WhatsAppFab` (`wa.me/31619800612` with prefilled Dutch message), safe-area offsets; footer bottom padding on mobile.
+### 7.2 Rules (read from `booking_settings`, managed in the management app)
+Slot step 15 min · buffer 15 min after each appointment · minimum notice 12 h · booking window 60 days · appointment must end by closing time · online cancel until 24 h before start. `pending` and `confirmed` bookings occupy their time.
 
-### Phase 3: Home page (1.5–2 days)
-- [ ] **Hero**: desktop split (image right 62%, `mask-image` fade), mobile full-bleed with vertical scrim; two CTAs; desktop-only glass card. `next/image` `priority`, `sizes="(min-width: 860px) 62vw, 100vw"`.
-- [ ] **TrustBar**: overlapping rounded ivory panel, 4 icon+label items.
-- [ ] **Services**: header row + 6 `ServiceCard` + wide `AdviceCard` (§5). Card meta: "30 – 90 min" left, "**vanaf** €35" right (Pedicure SPA: "60 min · €60"). "Boek Nu" opens Cal.com for that service directly. Hover lift only on `(hover: hover)`.
-- [ ] **Reviews** (`#ervaringen`): cards with stars, quote (serif italic), first name + treatment. Rendered only when there's ≥ 1 approved review. Below it: "Bent u bij Nataly geweest? Deel uw ervaring →" link to `/review`.
-- [ ] **Contact**: phone `tel:+31619800612`, email `mailto:natalypereyrav@gmail.com`, hours, "Oosterhout", Instagram; dark CTA panel keeps the design copy ("Nataly bevestigt uw afspraak persoonlijk") + `CancellationNote`.
-- [ ] **FinalImageCta**: large rounded image with ivory notch + CTA.
-- [ ] `scroll-margin-top` on sections; smooth scroll respects `prefers-reduced-motion`.
+### 7.3 Free-time calculation (`slots.ts`, pure function, unit-tested)
+Input: date, duration, opening hours for that weekday, time off, occupied ranges (pending + confirmed, each extended by the buffer), settings, "now".
+1. Open intervals for the day in Europe/Amsterdam, minus time off.
+2. Candidate starts every 15 min from opening; keep a start if `[start, start + duration + buffer)` overlaps nothing, `start + duration ≤ close`, `start ≥ now + 12 h`, within 60 days.
+3. Store UTC, display local time.
 
-### Phase 4: Over Mij page (½–1 day)
-- [ ] Intro: 3:4 portrait + caption, H1 with italic "Nataly", body copy, stats row (10 jaar · Oosterhout).
-- [ ] Pillars: 4 numbered cards, 2-col → 1-col.
-- [ ] Quote block.
-- [ ] Dark CTA banner → opens the booking flow.
-- [ ] Minimal footer.
+Month view: one query for the month's bookings/time off, then step 2 per day. Tests cover DST change days, buffers, edges of opening hours and time off spanning midnight. Free times are fetched live (not cached), so changes in the management app show immediately.
 
-### Phase 5: Cal.com setup & booking integration (1–1.5 days)
+### 7.4 Requesting a booking (`requestBooking`)
+Zod validation → Turnstile + honeypot + rate limit (~5 per IP per hour) → re-check the slot → insert `pending` booking with a random manage token (stored hashed). The database's exclusion constraint guarantees no double bookings; a database trigger queues the "aanvraag ontvangen" email to the client and the request email to Nataly (sent by the management app).
 
-**Cal.com account (set up together with Nataly, using natalypereyrav@gmail.com)**
-- [ ] Create account + username (e.g. `cal.com/natalybeautymassages`); profile photo, Dutch language, timezone Europe/Amsterdam.
-- [ ] Connect **Google Calendar** so busy times block slots and bookings appear in her calendar.
-- [ ] Availability: Mon–Sat 09:00–21:00 (adjust to real working hours); days off via the Cal.com app.
-- [ ] **6 event types** (§0.1). Massages use **multiple durations** (30/60/75/90 or 30/60/75) so the **client picks the length**; Pedicure SPA fixed 60 min. Event description lists the price per duration + "Prijzen incl. BTW".
-- [ ] Turn on **"Requires confirmation"** for every event type, so each booking is a request that Nataly accepts or declines in the Cal.com app or email. The client gets a "request received" email, then a confirmation (with the full address) or a decline.
-- [ ] Set expectations: Nataly confirms quickly (the design says "meestal binnen enkele uren"). Turn on Cal.com email notifications on her phone.
-- [ ] Per event: buffer between appointments (e.g. 15 min), minimum notice (e.g. 12 h; must leave time for approval), booking window (e.g. 60 days), location = salon address (only revealed in the confirmation).
-- [ ] Booking questions: name, email, **phone** (required), optional "Opmerkingen of wensen". No medical questions.
-- [ ] **24-hour cancellation rule**: text in every event description, booking page and confirmation email ("Annuleren of wijzigen kan tot 24 uur voor uw afspraak"). Check whether the Cal.com plan can block client cancel/reschedule inside 24 h; if not, the rule is enforced as policy (terms page).
-- [ ] Optional: reminder emails/SMS via Cal.com Workflows (check plan).
+### 7.5 Client's booking page (`/afspraak/[id]?token=…`)
+Linked from every client email. Shows status (aangevraagd / bevestigd / afgewezen / verlopen / geannuleerd), service, duration, date/time, price. **Annuleren** is available until 24 h before the start; after that: "Annuleren is niet meer online mogelijk. Neem contact op via WhatsApp of bel 06 1980 0612." Cancelling sets status `cancelled` (by client); the trigger queues the email to Nataly.
 
-**Website integration**
-- [ ] `BookingProvider` in root layout; lazy-load `@calcom/embed-react` (`getCalApi`) on first hover/focus/tap of any booking trigger or on idle.
-- [ ] Cal UI config: light theme, brand colour `#94683F`, month view, `nl` locale.
-- [ ] `BookButton` is a real `<a href="https://cal.com/<user>/<slug>">`, so it works without JS and is enhanced to open the popup.
-- [ ] Generic CTAs open the designed **ServicePicker** (bottom sheet on mobile, centred dialog on desktop, reusing the design's service list with "vanaf" prices). Picking a service opens the Cal.com popup.
-- [ ] **CancellationNote** shown in the ServicePicker, the contact CTA panel, below the services grid, and on the terms page.
-- [ ] `?boek=<slug>` opens the popup directly (read via `useSearchParams` inside `<Suspense>` so pages stay static).
-- [ ] Listen to Cal embed `bookingSuccessful` → show a short message in Dutch: "Uw aanvraag is verstuurd. Nataly bevestigt deze zo snell mogelijk." + analytics event.
-- [ ] "Vraag Advies" (advice card) → WhatsApp with prefilled message.
+### 7.6 Reviews (website part)
+The review form stays as built, but `submitReview` only inserts the `pending` review; the database trigger queues the moderation email, which the management app sends. Approved reviews are read with `"use cache"` + `cacheTag('reviews')`; the management app calls `/api/revalidate` after publishing or removing.
 
-### Phase 6: Review page & moderation (1.5–2 days)
-
-**Flow:** treatment done → client receives the review link → fills in the form → Nataly gets an email → taps "Publiceren" → the review appears on the home page.
-
-- [ ] **How clients get the link** (confirmed: all three):
-  - Cal.com **Workflow**: email ~2 hours after the appointment ends with "Hoe was uw behandeling?" + link to `/review?behandeling=<slug>` (check that the Cal.com plan includes Workflows).
-  - A **QR code card** in the salon.
-  - A ready-made **WhatsApp message** Nataly can send (template with the link).
-- [ ] **`/review` page** (design language: cream background, eyebrow "Uw ervaring", H1 with italic accent, form in an ivory card):
-  - Name (shown as first name + initial), treatment (select from the 6 services, prefilled via `?behandeling=`), **star rating 1–5**, review text (min ~20, max ~800 chars), checkbox "Ik geef toestemming om mijn review op de website te publiceren", privacy link.
-  - Honeypot + Turnstile; rate limit per IP.
-  - Success view: "Dank u wel! Uw review wordt na controle geplaatst."
-  - `noindex`, minimal footer.
-- [ ] **Server Action `submitReview`**: Zod validation → insert into Supabase with `status = 'pending'` → send **moderation email** to natalypereyrav@gmail.com (Resend) with the review and two buttons: **Publiceren** / **Verwijderen** (HMAC-signed, expiring links).
-- [ ] **Moderation endpoint**: link opens a small confirm page (prevents email scanners from auto-approving via GET) → POST updates status → `revalidateTag('reviews')`.
-- [ ] **Display**: `ReviewsSection` on home shows approved reviews (newest first, max ~6, "Toon meer" if needed). Hidden until the first one is approved.
-- [ ] **Transparency** (EU consumer law requires saying whether/how reviews are checked to come from real clients): a short line under the reviews, e.g. "Reviews worden geplaatst door klanten na hun behandeling en door Nataly gecontroleerd voordat ze online komen." Negative but genuine reviews shouldn't be rejected just for being negative.
-- [ ] Don't add review-star JSON-LD (`AggregateRating`) for self-collected reviews; Google ignores/penalises it for local businesses. Also encourage happy clients to leave a **Google review** (link on the thank-you screen).
-- [ ] Privacy policy covers review data (what's stored, publication, deletion on request).
-
-### Phase 7: SEO, legal, local presence (½–1 day)
-- [ ] Per-page `metadata` (title template `%s · Nataly Beauty Massages`, description, canonical via `metadataBase = https://natalybeautymassages.nl`, Open Graph); generated OG image.
-- [ ] JSON-LD `HealthAndBeautyBusiness` with name, phone, email, `address.addressLocality = Oosterhout` (no street), opening hours, `sameAs` Instagram, `makesOffer` per service with "vanaf" price.
-- [ ] `app/sitemap.ts` (excludes `/review`), `app/robots.ts`.
-- [ ] Privacy policy (Cal.com, Supabase, Resend, Vercel as processors; booking + review data; retention; contact) + terms with the **24-hour cancellation rule** and the booking-approval process. KvK line added once registered.
-- [ ] Recommend a **Google Business Profile** (can hide the street address as a service-area business), linked to the booking URL.
-
-### Phase 8: Accessibility, performance & QA (1 day)
-- [ ] WCAG 2.2 AA: contrast audit, keyboard walkthrough, visible focus rings, Dutch alt texts, `aria-label`s, landmarks, heading order; star rating usable with keyboard and screen reader.
-- [ ] `prefers-reduced-motion`: disable smooth scroll and hover lifts.
-- [ ] Performance budget: LCP < 2.0s on 4G, CLS < 0.05, INP < 200ms, first-load JS < 130 KB gzipped (Cal embed excluded since it's lazy-loaded), total home weight < 900 KB. Lighthouse mobile ≥ 90 Performance, ≥ 95 A11y/Best Practices/SEO.
-- [ ] `next build`: marketing routes `○ (Static)` / ISR; no accidental dynamic rendering.
-- [ ] Playwright: nav, menu, service picker, Cal popup opens with the right event (network-stubbed), review form validation + submit (Supabase/Resend mocked), moderation link flow; screenshots at 390 / 768 / 1280.
-- [ ] Real-device check (iPhone Safari, Android Chrome).
-- [ ] End-to-end with real services: book → Nataly approves → confirmation email + calendar entry; cancel within/outside 24 h; submit review → approve → visible on home.
-
-### Phase 9: Launch (½ day)
-- [ ] Point **natalybeautymassages.nl** to Vercel (DNS); `www` → apex redirect.
-- [ ] Verify the domain in Resend (SPF/DKIM) so moderation emails don't land in spam.
-- [ ] Production env vars; Supabase RLS double-checked.
-- [ ] Enable analytics; submit sitemap in Google Search Console.
-- [ ] Update Instagram bio link; print the review QR card.
-
-**Estimated total: ~9–11 working days** for one developer (review page + moderation adds ~1.5–2 days), excluding waiting on content.
+### 7.7 Privacy & terms
+- Privacy policy: processors Supabase, Resend (via the management app), Vercel, Cloudflare; what is stored for bookings and reviews; 12-month retention; no Cal.com/Google Calendar.
+- Terms: request + approval by Nataly, online cancellation until 24 h before, after that by phone/WhatsApp.
 
 ---
 
-## 8. Definition of done
-- Pixel-close to the design at 390px and 1440px; no horizontal scroll from 320px up.
-- Every "Boek" CTA on every page leads to the correct Cal.com booking (also without JavaScript); bookings arrive as **requests** that Nataly approves.
-- The 24-hour cancellation note is visible before booking and in every confirmation.
-- Service cards show the correct "vanaf" prices from §0.1.
-- A review can be submitted on mobile in under a minute, reaches Nataly's inbox, and appears on the home page after one tap on "Publiceren".
-- Lighthouse mobile: Performance ≥ 90, Accessibility/Best Practices/SEO ≥ 95.
-- Keyboard-only and screen-reader usable (menu, service picker, review form).
-- All placeholder data replaced; privacy policy and terms live.
+## 8. Phases (website)
+
+### Done ✅ (branch `feat/website-v1`)
+- Setup, assets/tokens, layout (header, footers, mobile bar, WhatsApp), home, Over Mij.
+- Review form and approved reviews on home (moderation moves to the management app).
+- SEO (metadata, JSON-LD, sitemap, robots, OG image), privacy and terms pages.
+- QA on the production build at 390 / 768 / 1440 px.
+
+### Depends on `nataly-beheer` phase B2
+The database schema (bookings, opening hours, time off, settings, outbox, triggers) is created in the management repo. The website phases below start once B2 is done and types are generated.
+
+### W1: Free-time engine (1 day)
+- [ ] `slots.ts` + Vitest tests (DST, buffers, notice, window, time off, edges).
+- [ ] `queries.ts` + `getMonthAvailability`, `getDaySlots`.
+
+### W2: Booking flow UI (2 days)
+- [ ] `BookingFlow` sheet/dialog with steps 1–7, back navigation, sticky summary footer, focus management per step.
+- [ ] Month calendar (keyboard accessible, disabled days announced) and time-slot grid with empty state.
+- [ ] Details form (Zod, Dutch inline errors), Turnstile, consent.
+- [ ] `requestBooking` action incl. "net bezet" handling; analytics event.
+- [ ] Rewire `BookingProvider`, `BookButton`, `ServicePicker`, `?boek=`; remove Cal.com.
+- [ ] No-JS fallback at `/afspraak`.
+
+### W3: Client booking page (½ day)
+- [ ] `/afspraak/[id]` with token check, status display, cancel with 24 h rule.
+
+### W4: Reviews & clean-up (½ day)
+- [ ] `submitReview` without email sending; remove `/review/beheer`, `src/emails/`, tokens, Resend; `/api/revalidate`.
+- [ ] Move `supabase/migrations/` to `nataly-beheer`; add generated `database.types.ts`.
+- [ ] Privacy, terms, contact/picker copy (§7.7); README updated (no Cal.com guide).
+
+### W5: QA (1 day)
+- [ ] Playwright: full booking request, "net bezet" race (two parallel requests → one wins), cancel before/after the 24 h cut-off, no-JS fallback.
+- [ ] Phone check (iPhone Safari, Android Chrome) of sheet, calendar and time grid.
+- [ ] Accessibility: keyboard through the whole flow, screen-reader labels for calendar and times.
+
+**Estimate website: ~5 working days. Management app: ~7.5–8 days (plan in `nataly-beheer`). Together ~12–13 days.**
+The split costs ~1–2 extra days compared with one app (two projects, shared types, outbox/webhook), in exchange for a lighter website and one place for all emails and data rules.
+
+### Launch (both apps, ½ day)
+- [ ] Supabase project (EU), migrations from `nataly-beheer`; Resend domain verified; Turnstile widgets for both domains.
+- [ ] Two Vercel projects: `natalybeautymassages.nl` and `beheer.natalybeautymassages.nl`; env vars.
+- [ ] Nataly: first login, set working hours, add the agenda feed to her phone, test booking end to end.
+- [ ] Review QR card, Instagram bio link, Google Business Profile, Search Console sitemap.
+
+### Environment variables (website)
+`NEXT_PUBLIC_SITE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `REVALIDATE_SECRET`.
+Removed: `NEXT_PUBLIC_CAL_USERNAME`, `RESEND_*`, `REVIEW_NOTIFY_EMAIL`, `REVIEW_TOKEN_SECRET`.
 
 ---
 
-## 9. Content to prepare (by Nataly)
-- Check the service descriptions (from the design) for the 6 services.
-- Real working hours (design says Mon–Sat 09:00–21:00).
-- Salon address (only used in Cal.com confirmations, not on the site).
+## 9. Definition of done (website)
+- A client can request an appointment on a phone in under 2 minutes, choosing service, duration (with price), date and time.
+- Free times reflect Nataly's working hours, time off and existing bookings immediately.
+- Double bookings are impossible, also with simultaneous requests.
+- The client's booking page shows the current status; online cancellation works until 24 h before and is refused after that.
+- Times are correct across the summer/winter time change.
+- Lighthouse mobile: Performance ≥ 90, Accessibility/Best Practices/SEO ≥ 95; no horizontal scroll from 320px.
+- Keyboard and screen-reader usable throughout the booking flow.
+- Privacy policy and terms match how the system works.
 
 ---
 
-## 10. Still open
-
-Nothing. All client questions are answered. Remaining inputs are the content items in §9.
+## 10. Content to prepare (by Nataly)
+- Check the service descriptions for the 6 services.
+- Real working hours (default Mon–Sat 09:00–21:00); she can change them herself in the management app.
+- Salon address (only used in confirmation emails).
 
 ---
 
-## 11. Implementation status (25 Oct 2026)
+## 11. Assumed defaults (change if wanted)
+| Topic | Default |
+|---|---|
+| Time slot step | 15 min |
+| Buffer between appointments | 15 min |
+| Minimum notice / booking window | 12 h / 60 days |
+| Pending request holds the slot | Yes, expires after 24 h |
+| Reminder email | 24 h before |
+| Review request email | 2 h after the appointment |
+| Client data retention | 12 months after the appointment |
 
-Phases 0–6 built; QA done on the production build (screenshots at 390 / 768 / 1440 px, no horizontal overflow, review form tested end-to-end up to the database step). Not done yet: Cal.com account setup, Supabase/Resend/Turnstile accounts, Vercel deploy and domain (Phases 5 account part, 9). Setup steps are in `README.md`.
+---
 
-Deviations from the plan:
-- **Next.js 16.4** (current release) instead of 15, with Cache Components; reviews use `"use cache"` + `cacheTag("reviews")` and `updateTag` on approval.
-- **Logo kept as the design's PNG**: it's a metallic texture, which an SVG trace would lose. At header size the 375 px source is sharp on retina.
-- **Over Mij header** reuses the site header (incl. the mobile menu) instead of the design's logo-plus-button only, so phone visitors can navigate.
-- **Over Mij pillar 02** ("Nieuwe Schoonheidsbehandelingen") rewritten to "Verzorging van top tot teen" because Lifting wimpers was removed. Please check.
-- **Terms page** only states what was confirmed (approval, 24 h cancellation, prices incl. BTW). No no-show fee or payment moment; add them if Nataly wants them.
-- **Privacy policy and terms** are a solid starting text, not legal advice; have them checked.
+## 12. Deviations from the original design (already built)
+- **Logo** kept as the design's PNG (metallic texture would be lost as SVG).
+- **Over Mij header** uses the full site header incl. mobile menu.
+- **Over Mij pillar 02** rewritten to "Verzorging van top tot teen" because Lifting wimpers was removed. Please check.
+- **Terms page** states only confirmed rules (no no-show fee or payment moment).
+- **Privacy policy and terms** are a starting text, not legal advice; have them checked.
+
+---
+
+## 13. Implementation notes (W1–W5, 26 Oct 2026)
+
+**Built and tested end-to-end** against the shared Supabase database, with nataly-beheer sending the emails (to Resend's test address):
+- Booking on a phone: service card → date (only days with free times) → time → details → review (Turnstile) → "Dank u". First free time respects the 12 h notice; the last time still ends by closing.
+- "Net bezet": when someone takes the same time first, the database refuses the second request; the client returns to the time step with a message and refreshed times (incl. the 15-min buffer on both sides).
+- Client booking page: wrong token refused; status shown; cancelling works until 24 h before, after that the page points to WhatsApp/phone; Nataly and the client get emails.
+- `/afspraak?dienst=…` and `/?boek=…` open the dialog at that service; back to the service list always possible; Escape closes.
+- Review form stores a pending review (moderation email via nataly-beheer). `/api/revalidate` refuses calls without the secret.
+- Unit tests for the free-time calculation (9), incl. both summer/winter time change days.
+
+**Deviations from the plan:**
+- **No booking without JavaScript.** The spam check (Turnstile) needs JavaScript, so a no-JS form could never pass. `/afspraak` is instead a shareable booking link that opens the dialog; without JavaScript it shows phone and WhatsApp.
+- **Client booking links** use an HMAC token shared with nataly-beheer (`MANAGE_LINK_SECRET`) instead of a stored hash.
+- The database schema and migrations live in nataly-beheer only; this repo has a copy of the generated types.
