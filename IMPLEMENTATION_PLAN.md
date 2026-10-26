@@ -10,7 +10,7 @@ Domain: **natalybeautymassages.nl** · Booking: **own reservation system** (no C
 - **Website** (this repo, `nati-beaty-massage`): public pages, the client booking flow, the client's booking page, the review form. **This plan.**
 - **Beheer** (separate repo `nataly-beheer`, `beheer.natalybeautymassages.nl`): Nataly's management, all emails, scheduled jobs, review moderation, database schema. **See `IMPLEMENTATION_PLAN.md` in the `nataly-beheer` repo.**
 
-**Status (26 Oct 2026):** the marketing site and the review form are built (branch `feat/website-v1`). That build still opens Cal.com for bookings and sends review emails itself; both change in phases W1–W5 (§8).
+**Status (26 Oct 2026):** website phases W1–W5 are done (branch `feat/website-v1`): own booking dialog, client booking page, reviews without own email sending, Cal.com and Resend removed. Remaining: launch (§8, "Launch"). See "Implementation notes" below.
 
 ---
 
@@ -304,3 +304,20 @@ Removed: `NEXT_PUBLIC_CAL_USERNAME`, `RESEND_*`, `REVIEW_NOTIFY_EMAIL`, `REVIEW_
 - **Over Mij pillar 02** rewritten to "Verzorging van top tot teen" because Lifting wimpers was removed. Please check.
 - **Terms page** states only confirmed rules (no no-show fee or payment moment).
 - **Privacy policy and terms** are a starting text, not legal advice; have them checked.
+
+---
+
+## 13. Implementation notes (W1–W5, 26 Oct 2026)
+
+**Built and tested end-to-end** against the shared Supabase database, with nataly-beheer sending the emails (to Resend's test address):
+- Booking on a phone: service card → date (only days with free times) → time → details → review (Turnstile) → "Dank u". First free time respects the 12 h notice; the last time still ends by closing.
+- "Net bezet": when someone takes the same time first, the database refuses the second request; the client returns to the time step with a message and refreshed times (incl. the 15-min buffer on both sides).
+- Client booking page: wrong token refused; status shown; cancelling works until 24 h before, after that the page points to WhatsApp/phone; Nataly and the client get emails.
+- `/afspraak?dienst=…` and `/?boek=…` open the dialog at that service; back to the service list always possible; Escape closes.
+- Review form stores a pending review (moderation email via nataly-beheer). `/api/revalidate` refuses calls without the secret.
+- Unit tests for the free-time calculation (9), incl. both summer/winter time change days.
+
+**Deviations from the plan:**
+- **No booking without JavaScript.** The spam check (Turnstile) needs JavaScript, so a no-JS form could never pass. `/afspraak` is instead a shareable booking link that opens the dialog; without JavaScript it shows phone and WhatsApp.
+- **Client booking links** use an HMAC token shared with nataly-beheer (`MANAGE_LINK_SECRET`) instead of a stored hash.
+- The database schema and migrations live in nataly-beheer only; this repo has a copy of the generated types.

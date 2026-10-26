@@ -1,69 +1,68 @@
 # Nataly Beauty Massages
 
-Website for Nataly Beauty Massages (Oosterhout): Next.js 16 (App Router, Cache Components) + Tailwind CSS v4, bookings via Cal.com, client reviews via Supabase + Resend. See `IMPLEMENTATION_PLAN.md` for the decisions behind it.
+Website for Nataly Beauty Massages (Oosterhout): Next.js 16 (App Router, Cache Components) + Tailwind CSS v4. Clients request appointments and leave reviews here; Nataly manages them in the separate management app [`nataly-beheer`](https://github.com/jfahellemons/nataly-beheer). Both apps share one Supabase database. See `IMPLEMENTATION_PLAN.md` for the decisions behind it.
 
 ## Development
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in what you have; everything is optional locally
+cp .env.example .env.local   # values: see below
 npm run dev                  # http://localhost:3000
 ```
 
 | Script | |
 |---|---|
-| `npm run build` | Production build. All public pages are static (`○`). |
+| `npm run build` | Production build. Marketing pages are static. |
+| `npm test` | Unit tests (free-time calculation incl. summer/winter time). |
 | `npm run lint` / `npm run typecheck` / `npm run format` | Quality checks. |
-
-Without Supabase/Resend credentials the site works fully; the reviews section stays hidden and the review form shows a friendly error on submit.
 
 ## Where things live
 
 | What | File |
 |---|---|
-| Contact details, hours, Instagram, Cal.com username, cancellation note | `src/content/site.ts` |
+| Contact details, hours shown on the site, Instagram, cancellation note | `src/content/site.ts` |
 | Services, descriptions, prices per duration, photos | `src/content/services.ts` |
 | Design tokens (colours, fonts, breakpoints) | `src/app/globals.css` |
-| Booking (Cal.com popup, service picker, `?boek=<slug>`) | `src/components/booking/` |
-| Reviews (form, server actions, moderation) | `src/components/reviews/`, `src/lib/reviews/`, `src/app/review/` |
+| Booking dialog (service → duration → date → time → details → review) | `src/components/booking/` |
+| Free-time calculation | `src/lib/booking/slots.ts` (+ tests) |
+| Booking server actions (availability, request, client cancel) | `src/lib/booking/actions.ts` |
+| Client's own booking page (`/afspraak/<id>?token=…`) | `src/app/afspraak/[id]/` |
+| Shareable booking link (`/afspraak`, `?dienst=<slug>`) | `src/app/afspraak/page.tsx` |
+| Reviews (form, approved reviews, cache refresh endpoint) | `src/components/reviews/`, `src/lib/reviews/`, `src/app/api/revalidate/` |
 | Privacy policy / terms | `src/app/privacy/`, `src/app/algemene-voorwaarden/` |
 
 ### Changing a price
 
-1. Update `prices` in `src/content/services.ts` (the card shows the lowest one as "vanaf €…").
-2. Update the price list in that service's Cal.com event description.
+Update `prices` in `src/content/services.ts` **here and in `nataly-beheer`** (same file). The card shows the lowest price as "vanaf €…".
 
-## Cal.com setup (with Nataly)
+## How booking works
 
-1. Create the account with `natalypereyrav@gmail.com`; username must match `NEXT_PUBLIC_CAL_USERNAME` (default `natalybeautymassages`). Language Dutch, timezone Europe/Amsterdam.
-2. Connect Google Calendar.
-3. Availability: Mon–Sat 09:00–21:00 (adjust to real hours).
-4. Create one event type per service. **The event slug must equal the service `slug`:**
+1. A client picks service, duration (with price), date and time. Free times come live from the database: Nataly's working hours, time off, existing bookings and the rules from Beheer → Instellingen (time steps, 15-min buffer, 12 h notice, 60-day window).
+2. Sending creates a `pending` booking. The database refuses overlapping bookings, so two people can never get the same time; the loser sees "Dit tijdstip is net bezet".
+3. Database triggers queue the emails; **nataly-beheer sends them** (the website sends no email itself). Nataly accepts or declines from her email or the management app.
+4. Every client email links to `/afspraak/<id>?token=…`, where the client sees the status and can cancel until 24 h before. The token is an HMAC with `MANAGE_LINK_SECRET`, which must be identical in both apps.
 
-   | Event slug | Durations (multiple durations option) |
-   |---|---|
-   | `therapeutische-massage` | 30 / 60 / 75 / 90 |
-   | `volledige-lichaamsmassage` | 30 / 60 / 75 / 90 |
-   | `craniofaciale-massage` | 30 / 60 / 75 / 90 |
-   | `rug-nek-schoudermassage` | 30 / 60 / 75 |
-   | `benen-voetenmassage` | 30 / 60 / 75 |
-   | `pedicure-spa` | 60 (fixed) |
+Links to share: `/afspraak` opens the booking dialog; `/afspraak?dienst=pedicure-spa` (or `/?boek=pedicure-spa`) starts at that service.
 
-5. For every event: turn on **Requires confirmation**, add the prices per duration and "Annuleren of wijzigen kan tot 24 uur voor uw afspraak." to the description, require a phone number, set the salon address as location, and add a buffer (e.g. 15 min) and a minimum notice (e.g. 12 h).
-6. Review link: add a Workflow (if the plan includes it) that emails `https://natalybeautymassages.nl/review?behandeling=<slug>` a few hours after the appointment. Also print a QR code to `/review` for the salon and save a WhatsApp template with the link.
+## Reviews
 
-## Reviews setup
+Clients submit on `/review` (prefill with `?behandeling=<slug>`); reviews are stored as `pending` and Nataly gets a moderation email from nataly-beheer. Approved reviews appear on the home page. After a decision, nataly-beheer calls `POST /api/revalidate` (header `x-revalidate-secret` = `REVALIDATE_SECRET`) so the change shows immediately.
 
-1. **Supabase** (EU region): create a project and run `supabase/migrations/0001_reviews.sql` in the SQL editor. Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (server only).
-2. **Resend**: verify the domain `natalybeautymassages.nl` (SPF/DKIM), set `RESEND_API_KEY` and `RESEND_FROM_EMAIL`. Moderation emails go to `REVIEW_NOTIFY_EMAIL`.
-3. **Token secret**: `REVIEW_TOKEN_SECRET=$(openssl rand -base64 48)`.
-4. **Cloudflare Turnstile**: create a widget for the domain and set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`. In production the form rejects submissions when these are missing.
+## Environment
 
-Flow: client submits on `/review` → stored as `pending` → Nataly gets an email with **Publiceren / Verwijderen** → the link opens `/review/beheer`, she confirms → the review appears on the home page (cache tag `reviews`).
+| Variable | Notes |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | `https://natalybeautymassages.nl` |
+| `SUPABASE_URL`, `SUPABASE_SECRET_KEY` | Shared project `kqxdrzeocbguzlukqkvg`. Secret key only on the server |
+| `MANAGE_LINK_SECRET` | Same value as in nataly-beheer |
+| `REVALIDATE_SECRET` | Same value as `WEBSITE_REVALIDATE_SECRET` in nataly-beheer |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile widget for the domain. Required in production (forms are refused without it). Locally the Cloudflare test keys are used |
+
+The database schema is owned by nataly-beheer (`supabase/migrations/`). After a schema change, copy its `src/lib/database.types.ts` here.
 
 ## Deployment (Vercel)
 
-1. Import the repo in Vercel and add the environment variables from `.env.example`.
+1. Import the repo in Vercel and add the environment variables above.
 2. Add the domain `natalybeautymassages.nl` (and redirect `www`).
 3. Enable Web Analytics and Speed Insights in the Vercel dashboard.
 4. Submit `https://natalybeautymassages.nl/sitemap.xml` in Google Search Console.

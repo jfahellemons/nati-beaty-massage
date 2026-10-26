@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage eyebrow="Privacy" title="Privacybeleid" updated="25 oktober 2026">
+    <LegalPage eyebrow="Privacy" title="Privacybeleid" updated="26 oktober 2026">
       <p>
         {site.name} ({site.city}) gaat zorgvuldig om met uw persoonsgegevens. In dit privacybeleid leest u
         welke gegevens wij verwerken, waarom, en welke rechten u heeft. Vragen? Mail naar{" "}
@@ -19,11 +19,11 @@ export default function PrivacyPage() {
 
       <h2>Afspraken maken</h2>
       <p>
-        Afspraken worden gemaakt via <strong>Cal.com</strong>. Daarbij vragen wij uw naam, e-mailadres,
-        telefoonnummer en eventuele opmerkingen. Deze gegevens gebruiken wij alleen om uw afspraak te plannen,
-        te bevestigen en u indien nodig te bereiken. De afspraak wordt opgeslagen in de agenda van Nataly
-        (Google Agenda). Vermeld in het opmerkingenveld geen medische gegevens; bespreek klachten liever
-        persoonlijk tijdens de afspraak.
+        Als u via de website een afspraak aanvraagt, vragen wij uw naam, e-mailadres, telefoonnummer en
+        eventuele opmerkingen. Deze gegevens gebruiken wij alleen om uw afspraak te plannen, te bevestigen, u
+        een herinnering en na afloop een verzoek om een review te sturen, en u indien nodig te bereiken.
+        Vermeld in het opmerkingenveld geen medische gegevens; bespreek klachten liever persoonlijk tijdens de
+        afspraak.
       </p>
 
       <h2>Reviews</h2>
@@ -43,25 +43,24 @@ export default function PrivacyPage() {
       <h2>Dienstverleners</h2>
       <p>Voor onze website en afspraken maken wij gebruik van de volgende dienstverleners (verwerkers):</p>
       <ul>
-        <li>Cal.com: online afspraken plannen</li>
-        <li>Google: agenda en e-mail</li>
         <li>Vercel: hosting van de website en anonieme bezoekersstatistieken</li>
-        <li>Supabase: opslag van reviews</li>
-        <li>Resend: verzenden van e-mailmeldingen over reviews</li>
-        <li>Cloudflare Turnstile: bescherming van het reviewformulier tegen spam</li>
+        <li>Supabase (servers in de EU): opslag van afspraken en reviews</li>
+        <li>Resend (servers in de EU): verzenden van e-mails over afspraken en reviews</li>
+        <li>Cloudflare Turnstile: bescherming van het afspraak- en reviewformulier tegen spam</li>
+        <li>Google (Gmail): ontvangen van e-mails door Nataly</li>
       </ul>
 
       <h2>Cookies en statistieken</h2>
       <p>
         Deze website plaatst geen tracking- of advertentiecookies. Wij meten bezoekersaantallen anoniem en
-        zonder cookies. Wanneer u een afspraak maakt, laadt de website het boekingsvenster van Cal.com;
-        Cal.com kan daarbij functionele cookies gebruiken die nodig zijn om de afspraak te maken.
+        zonder cookies. Bij het versturen van een formulier controleert Cloudflare Turnstile of u geen robot
+        bent.
       </p>
 
       <h2>Bewaartermijnen</h2>
       <p>
-        Wij bewaren gegevens niet langer dan nodig. Afspraakgegevens bewaren wij zolang dat nodig is voor onze
-        administratie. Reviews blijven online tot u vraagt ze te verwijderen.
+        Wij bewaren gegevens niet langer dan nodig. Uw naam en contactgegevens bij een afspraak worden 12
+        maanden na de afspraak automatisch verwijderd. Reviews blijven online tot u vraagt ze te verwijderen.
       </p>
 
       <h2>Uw rechten</h2>

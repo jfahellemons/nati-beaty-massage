@@ -13,16 +13,6 @@ export type PublicReview = {
   createdAt: string;
 };
 
-export type ReviewRow = {
-  id: string;
-  created_at: string;
-  name: string;
-  service_slug: string;
-  rating: number;
-  text: string;
-  status: "pending" | "approved" | "rejected";
-};
-
 /** Approved reviews, newest first. Cached until a review is moderated. */
 export async function getApprovedReviews(limit = 6): Promise<PublicReview[]> {
   "use cache";
@@ -51,15 +41,4 @@ export async function getApprovedReviews(limit = 6): Promise<PublicReview[]> {
     text: r.text,
     createdAt: r.created_at,
   }));
-}
-
-export async function getReviewById(id: string): Promise<ReviewRow | null> {
-  const supabase = getSupabase();
-  if (!supabase) return null;
-  const { data } = await supabase
-    .from("reviews")
-    .select("id, created_at, name, service_slug, rating, text, status")
-    .eq("id", id)
-    .maybeSingle();
-  return data;
 }
