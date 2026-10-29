@@ -106,18 +106,19 @@ export function ContactSection() {
             placeholder="blur"
             className="object-cover"
           />
-        </div>
-        <div
-          data-reveal
-          className="absolute bottom-0 left-0 max-w-[min(90%,460px)] rounded-tr-[32px] bg-ivory pt-7 pr-8"
-        >
-          <div className="flex flex-col gap-4">
-            <h3 className="font-serif text-[clamp(28px,3vw,38px)] leading-[1.1] font-normal text-ink">
+          {/* Soft dark fade at the bottom so the text reads on any photo. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[linear-gradient(180deg,transparent_35%,rgba(30,23,19,.82)_100%)]"
+          />
+          <div
+            data-reveal
+            className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-[clamp(24px,4vw,48px)]"
+          >
+            <Eyebrow tone="dark">{site.name}</Eyebrow>
+            <h3 className="max-w-[520px] font-serif text-[clamp(30px,3.6vw,46px)] leading-[1.08] font-normal text-balance text-ivory">
               Uw moment van rust begint hier.
             </h3>
-            <OpenBookingButton variant="deep" size="md" className="self-start">
-              Boek een Sessie
-            </OpenBookingButton>
           </div>
         </div>
       </div>
