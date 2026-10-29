@@ -7,6 +7,8 @@ import { site } from "@/content/site";
 import { services, lowestPrice } from "@/content/services";
 import { BookingProvider } from "@/components/booking/BookingProvider";
 import { BookingQueryHandler } from "@/components/booking/BookingQueryHandler";
+import { RevealObserver } from "@/components/motion/RevealObserver";
+import { motionInitScript } from "@/components/motion/initScript";
 import "./globals.css";
 
 const jost = Jost({
@@ -19,7 +21,6 @@ const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
   weight: ["400", "500"],
-  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -66,7 +67,16 @@ const jsonLd = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="nl" className={`${jost.variable} ${cormorant.variable}`}>
+    // `data-motion` is added by the inline script before hydration.
+    <html
+      lang="nl"
+      className={`${jost.variable} ${cormorant.variable}`}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: motionInitScript }} />
+      </head>
       <body>
         <a
           href="#main"
@@ -84,6 +94,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
         />
+        <RevealObserver />
         <Analytics />
         <SpeedInsights />
       </body>

@@ -30,37 +30,39 @@ export function ContactSection() {
     >
       <div className="mx-auto grid max-w-[1192px] grid-cols-[repeat(auto-fit,minmax(min(100%,400px),1fr))] items-start gap-[clamp(40px,6vw,88px)]">
         <div className="flex flex-col gap-[22px]">
-          <Eyebrow>Plan uw bezoek</Eyebrow>
-          <h2
-            id="contact-title"
-            className="text-[clamp(34px,4.2vw,54px)] leading-[1.08] font-normal tracking-[-0.015em]"
-          >
-            Begin Uw Wellness
-            <br />
-            <Accent>Reis Vandaag</Accent>
-          </h2>
-          <p className="max-w-[440px] text-base leading-[1.65] text-pretty text-muted">
-            Vraag uw behandeling aan in een paar stappen. Nataly bevestigt uw afspraak persoonlijk, meestal
-            binnen enkele uren.
-          </p>
+          <div data-reveal className="flex flex-col gap-[22px]">
+            <Eyebrow>Plan uw bezoek</Eyebrow>
+            <h2
+              id="contact-title"
+              className="text-[clamp(34px,4.2vw,54px)] leading-[1.08] font-normal tracking-[-0.015em]"
+            >
+              Begin Uw Wellness
+              <br />
+              <Accent>Reis Vandaag</Accent>
+            </h2>
+            <p className="max-w-[440px] text-base leading-[1.65] text-pretty text-muted">
+              Vraag uw behandeling aan in een paar stappen. Nataly bevestigt uw afspraak persoonlijk, meestal
+              binnen enkele uren.
+            </p>
+          </div>
 
           <ul className="mt-[18px] grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6 border-t border-line-softer pt-7">
             {contacts.map((c) => {
               const value = (
                 <span className="flex items-center gap-2.5 text-[15px] break-all text-ink">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-chip text-bronze-deep">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-chip text-bronze-deep transition-colors duration-300 group-hover/contact:bg-bronze group-hover/contact:text-white">
                     <Icon name={c.icon} size={15} strokeWidth={1.7} />
                   </span>
                   {c.value}
                 </span>
               );
               return (
-                <li key={c.label} className="flex flex-col gap-2.5">
+                <li key={c.label} data-reveal className="flex flex-col gap-2.5">
                   <span className="text-xs tracking-[0.06em] text-muted-2">{c.label}</span>
                   {c.href ? (
                     <a
                       href={c.href}
-                      className="hover:[&>span]:text-bronze-deep"
+                      className="group/contact hover:[&>span]:text-bronze-deep"
                       {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                     >
                       {value}
@@ -74,8 +76,11 @@ export function ContactSection() {
           </ul>
         </div>
 
-        <div className="flex flex-col gap-[22px] rounded-[30px] bg-ink p-[clamp(28px,4vw,48px)] text-ivory">
-          <h3 className="font-serif text-[clamp(30px,3.2vw,42px)] leading-[1.1] font-normal text-sand italic">
+        <div
+          data-reveal
+          className="flex flex-col gap-[22px] rounded-[30px] bg-ink p-[clamp(28px,4vw,48px)] text-ivory"
+        >
+          <h3 className="font-serif text-[clamp(30px,3.2vw,42px)] leading-[1.1] font-normal text-sand">
             Reserveer in een paar stappen
           </h3>
           <p className="text-base leading-relaxed text-on-dark">
@@ -89,7 +94,10 @@ export function ContactSection() {
       </div>
 
       <div className="relative mx-auto mt-[clamp(56px,7vw,96px)] max-w-[1192px]">
-        <div className="relative h-[clamp(320px,42vw,560px)] overflow-hidden rounded-[32px] bg-line">
+        <div
+          data-reveal="clip"
+          className="relative h-[clamp(320px,42vw,560px)] overflow-hidden rounded-[32px] bg-line"
+        >
           <Image
             src={finalImg}
             alt="Ontspannen sfeer tijdens een behandeling"
@@ -99,9 +107,12 @@ export function ContactSection() {
             className="object-cover"
           />
         </div>
-        <div className="absolute bottom-0 left-0 max-w-[min(90%,460px)] rounded-tr-[32px] bg-ivory pt-7 pr-8">
+        <div
+          data-reveal
+          className="absolute bottom-0 left-0 max-w-[min(90%,460px)] rounded-tr-[32px] bg-ivory pt-7 pr-8"
+        >
           <div className="flex flex-col gap-4">
-            <h3 className="font-serif text-[clamp(28px,3vw,38px)] leading-[1.1] font-normal text-ink italic">
+            <h3 className="font-serif text-[clamp(28px,3vw,38px)] leading-[1.1] font-normal text-ink">
               Uw moment van rust begint hier.
             </h3>
             <OpenBookingButton variant="deep" size="md" className="self-start">

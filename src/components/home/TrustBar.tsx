@@ -15,8 +15,8 @@ export function TrustBar() {
     >
       <ul className="mx-auto grid max-w-[1192px] grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-6">
         {items.map((item) => (
-          <li key={item.label} className="flex items-center justify-center gap-3.5 py-2.5">
-            <Icon name={item.icon} size={34} strokeWidth={1.1} className="text-bronze" />
+          <li key={item.label} data-reveal className="flex items-center justify-center gap-3.5 py-2.5">
+            <Icon name={item.icon} size={34} strokeWidth={1.1} className="text-bronze" draw />
             <span className="font-serif text-2xl tracking-[0.01em] text-bronze-darkest">{item.label}</span>
           </li>
         ))}

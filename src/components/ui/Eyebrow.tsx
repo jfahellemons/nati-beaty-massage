@@ -17,7 +17,10 @@ export function Eyebrow({
         className,
       )}
     >
-      <span aria-hidden="true" className={cn("h-px w-7", tone === "light" ? "bg-bronze" : "bg-sand-soft")} />
+      <span
+        aria-hidden="true"
+        className={cn("eyebrow-line h-px w-7", tone === "light" ? "bg-bronze" : "bg-sand-soft")}
+      />
       {children}
     </span>
   );
@@ -25,5 +28,5 @@ export function Eyebrow({
 
 /** Italic serif accent used inside headings. */
 export function Accent({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={cn("font-serif font-normal text-bronze-deep italic", className)}>{children}</span>;
+  return <span className={cn("font-serif font-normal text-bronze-deep", className)}>{children}</span>;
 }

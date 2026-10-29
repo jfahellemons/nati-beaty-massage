@@ -6,18 +6,18 @@ import { BookButton } from "@/components/booking/BookButton";
 import { Logo } from "./Logo";
 
 const heading = "text-xs tracking-[0.2em] text-sand-muted uppercase";
-const link = "text-sm text-on-dark hover:text-ivory";
+const link = "link-grow self-start text-sm text-on-dark hover:text-ivory";
 
 function LegalLinks() {
   return (
     <span className="flex flex-wrap gap-x-4 gap-y-1">
-      <Link href="/privacy" className="text-on-dark-muted hover:text-ivory">
+      <Link href="/privacy" className="link-grow text-on-dark-muted hover:text-ivory">
         Privacybeleid
       </Link>
-      <Link href="/algemene-voorwaarden" className="text-on-dark-muted hover:text-ivory">
+      <Link href="/algemene-voorwaarden" className="link-grow text-on-dark-muted hover:text-ivory">
         Algemene voorwaarden
       </Link>
-      <Link href="/review" className="text-on-dark-muted hover:text-ivory">
+      <Link href="/review" className="link-grow text-on-dark-muted hover:text-ivory">
         Deel uw ervaring
       </Link>
     </span>
@@ -33,7 +33,7 @@ export function SiteFooter({ withMobileBar = false }: { withMobileBar?: boolean 
         withMobileBar ? "pb-[110px] md:pb-10" : "pb-10",
       )}
     >
-      <div className="mx-auto flex max-w-[1192px] flex-col gap-12">
+      <div data-reveal="fade" className="mx-auto flex max-w-[1192px] flex-col gap-12">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-10">
           <div className="flex flex-col gap-[18px]">
             <Logo size="lg" nameClassName="text-ivory font-normal" subClassName="text-sand-muted" />
@@ -90,7 +90,7 @@ export function MinimalFooter() {
         </span>
         <span className="flex flex-wrap gap-x-4 gap-y-1">
           <LegalLinks />
-          <Link href="/" className="text-sand-muted hover:text-ivory">
+          <Link href="/" className="link-grow text-sand-muted hover:text-ivory">
             Terug naar home
           </Link>
         </span>

@@ -41,6 +41,62 @@
   --shadow-card-hover: 0 20px 50px rgba(110, 75, 44, 0.12);
   --shadow-soft: 0 6px 20px rgba(42, 33, 28, 0.12);
   --shadow-modal: 0 30px 80px rgba(0, 0, 0, 0.3);
+
+  /* Motion: calm ease-outs, no overshoot. See ANIMATION_PLAN.md. */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* `backwards`: the start state holds during a delay, and afterwards the element's own
+     styles apply again (so hover transforms keep working). */
+  --animate-fade-up: fade-up 700ms var(--ease-soft) backwards;
+  --animate-fade-in: fade-in 700ms var(--ease-soft) backwards;
+  --animate-settle: settle 1600ms var(--ease-soft) backwards;
+  --animate-reveal-clip: reveal-clip 1100ms var(--ease-soft) backwards;
+  --animate-step-forward: step-forward 400ms var(--ease-soft) backwards;
+  --animate-step-back: step-back 400ms var(--ease-soft) backwards;
+  --animate-pop: pop 300ms var(--ease-soft) backwards;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      translate: 0 16px;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes settle {
+    from {
+      scale: 1.06;
+    }
+  }
+  @keyframes reveal-clip {
+    from {
+      clip-path: inset(6% round 26px);
+    }
+    to {
+      clip-path: inset(0 round 0);
+    }
+  }
+  @keyframes step-forward {
+    from {
+      opacity: 0;
+      translate: 24px 0;
+    }
+  }
+  @keyframes step-back {
+    from {
+      opacity: 0;
+      translate: -24px 0;
+    }
+  }
+  @keyframes pop {
+    from {
+      scale: 0.88;
+    }
+  }
 }
 
 @layer base {
@@ -60,6 +116,13 @@
     *::after {
       transition-duration: 0.01ms !important;
       animation-duration: 0.01ms !important;
+      animation-delay: 0s !important;
+    }
+    ::view-transition-old(*),
+    ::view-transition-new(*),
+    ::view-transition-group(*) {
+      animation-duration: 0s !important;
+      animation-delay: 0s !important;
     }
   }
 
@@ -92,10 +155,217 @@
   }
 }
 
+/* ---------- Scroll reveals ----------
+   `data-motion` is set on <html> by an inline script before first paint (never with reduced
+   motion). Without it, nothing is hidden. RevealObserver sets `data-revealed` once an element
+   scrolls into view and staggers elements that arrive together via `--reveal-delay`. */
+html[data-motion] [data-reveal]:not([data-revealed]) {
+  opacity: 0;
+}
+[data-revealed] {
+  animation: var(--animate-fade-up);
+  animation-delay: var(--reveal-delay, 0ms);
+}
+[data-revealed][data-reveal="fade"] {
+  animation-name: fade-in;
+}
+[data-revealed][data-reveal="clip"] {
+  animation: var(--animate-reveal-clip);
+  animation-delay: var(--reveal-delay, 0ms);
+}
+/* The short line in front of an eyebrow grows in after its text block appears. */
+[data-revealed] .eyebrow-line,
+.animate-fade-up .eyebrow-line {
+  transform-origin: left;
+  animation: line-grow 900ms var(--ease-soft) backwards;
+  animation-delay: calc(var(--reveal-delay, 0ms) + 150ms);
+}
+/* Icons that draw their own outline (`<Icon draw />`). */
+[data-revealed] .icon-draw path {
+  stroke-dasharray: 1;
+  animation: draw 1100ms var(--ease-in-out-soft) backwards;
+  animation-delay: calc(var(--reveal-delay, 0ms) + 200ms);
+}
+/* Review stars light up one by one. */
+[data-revealed] .stars-fill svg {
+  animation:
+    pop 500ms var(--ease-soft) backwards,
+    fade-in 500ms var(--ease-soft) backwards;
+  animation-delay: calc(var(--reveal-delay, 0ms) + 250ms + var(--n, 0) * 70ms);
+}
+@keyframes line-grow {
+  from {
+    scale: 0 1;
+  }
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+/* ---------- Hero ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    /* The photo drifts down a little slower than the page while the hero scrolls away. */
+    .hero-parallax {
+      animation: hero-parallax linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+  }
+}
+@keyframes hero-parallax {
+  to {
+    translate: 0 22vh;
+  }
+}
+
+/* ---------- Booking dialog: fade + rise in, sheet from below on phones ---------- */
+dialog.booking-dialog {
+  opacity: 0;
+  translate: 0 100%;
+  transition:
+    opacity 300ms var(--ease-soft),
+    translate 450ms var(--ease-soft),
+    scale 450ms var(--ease-soft),
+    overlay 450ms allow-discrete,
+    display 450ms allow-discrete;
+}
+dialog.booking-dialog[open] {
+  opacity: 1;
+  translate: 0 0;
+}
+@starting-style {
+  dialog.booking-dialog[open] {
+    opacity: 0;
+    translate: 0 100%;
+  }
+}
+@media (min-width: 860px) {
+  dialog.booking-dialog {
+    translate: 0 24px;
+    scale: 0.97;
+  }
+  dialog.booking-dialog[open] {
+    translate: 0 0;
+    scale: 1;
+  }
+  @starting-style {
+    dialog.booking-dialog[open] {
+      translate: 0 24px;
+      scale: 0.97;
+    }
+  }
+}
+dialog.booking-dialog::backdrop {
+  opacity: 0;
+  transition:
+    opacity 400ms var(--ease-soft),
+    overlay 400ms allow-discrete,
+    display 400ms allow-discrete;
+}
+dialog.booking-dialog[open]::backdrop {
+  opacity: 1;
+}
+@starting-style {
+  dialog.booking-dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* Checkmark on the "sent" step draws itself. */
+.check-draw path {
+  stroke-dasharray: 1;
+  animation: draw 700ms var(--ease-in-out-soft) 250ms backwards;
+}
+
+/* "Versturen…" dots. */
+.dots span {
+  animation: dot 1.2s ease-in-out infinite;
+}
+.dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* ---------- WhatsApp button: one soft pulse ring ---------- */
+.wa-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--color-bronze);
+  opacity: 0;
+  pointer-events: none;
+}
+.wa-pulse[data-pulse]::after {
+  animation: soft-pulse 1800ms var(--ease-soft) 8s 1;
+}
+@keyframes soft-pulse {
+  from {
+    opacity: 0.6;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+
+/* ---------- Page transitions (React <ViewTransition>) ---------- */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(.page) {
+  animation: 200ms ease-in both page-out;
+}
+::view-transition-new(.page) {
+  animation: 350ms var(--ease-soft) 120ms both page-in;
+}
+@keyframes page-out {
+  to {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
 @utility text-balance {
   text-wrap: balance;
 }
 
 @utility text-pretty {
   text-wrap: pretty;
+}
+
+/* Underline that grows from the left on hover. */
+@utility link-grow {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition:
+    background-size 400ms var(--ease-soft),
+    color 200ms;
+  &:hover {
+    background-size: 100% 1px;
+  }
 }

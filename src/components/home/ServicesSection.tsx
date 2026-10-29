@@ -9,7 +9,10 @@ import { BookButton, OpenBookingButton } from "@/components/booking/BookButton";
 
 function ServiceCard({ service }: { service: Service }) {
   return (
-    <article className="flex flex-col rounded-card border border-line-soft bg-ivory p-2.5 transition-[box-shadow,transform] duration-300 [@media(hover:hover)]:hover:-translate-y-[3px] [@media(hover:hover)]:hover:shadow-card-hover">
+    <article
+      data-reveal
+      className="group flex flex-col rounded-card border border-line-soft bg-ivory p-2.5 transition-[box-shadow,translate] duration-500 ease-soft [@media(hover:hover)]:hover:-translate-y-[3px] [@media(hover:hover)]:hover:shadow-card-hover"
+    >
       <div className="relative h-[200px] shrink-0 overflow-hidden rounded-[18px] bg-line">
         <Image
           src={service.image}
@@ -17,7 +20,7 @@ function ServiceCard({ service }: { service: Service }) {
           fill
           sizes="(min-width: 1100px) 280px, (min-width: 640px) 45vw, 100vw"
           placeholder="blur"
-          className="object-cover"
+          className="object-cover transition-[scale] duration-700 ease-soft [@media(hover:hover)]:group-hover:scale-105"
         />
         <span className="absolute top-3 left-3 flex size-[42px] items-center justify-center rounded-full bg-ivory text-bronze-deep shadow-[0_4px_14px_rgba(42,33,28,.1)]">
           <Icon d={service.icon} size={20} strokeWidth={1.4} />
@@ -51,13 +54,16 @@ function ServiceCard({ service }: { service: Service }) {
 
 function AdviceCard() {
   return (
-    <article className="flex min-h-[260px] flex-col justify-between gap-7 rounded-card bg-ink px-7 py-8 text-ivory sm:col-span-2 sm:flex-row sm:items-end sm:gap-10 sm:px-10 sm:py-10">
+    <article
+      data-reveal
+      className="flex min-h-[260px] flex-col justify-between gap-7 rounded-card bg-ink px-7 py-8 text-ivory sm:col-span-2 sm:flex-row sm:items-end sm:gap-10 sm:px-10 sm:py-10"
+    >
       <div className="flex flex-col gap-7">
         <span className="flex size-[42px] items-center justify-center rounded-full border border-sand/50 text-sand">
           <Icon name="sparkle" size={20} strokeWidth={1.4} />
         </span>
         <div className="flex max-w-[420px] flex-col gap-3">
-          <h3 className="font-serif text-[32px] leading-[1.1] font-normal text-sand italic">
+          <h3 className="font-serif text-[32px] leading-[1.1] font-normal text-sand">
             Twijfelt u welke behandeling bij u past?
           </h3>
           <p className="text-sm leading-relaxed text-on-dark">
@@ -87,7 +93,7 @@ export function ServicesSection() {
     >
       <div className="mx-auto flex max-w-[1192px] flex-col gap-14">
         <div className="flex flex-wrap items-end justify-between gap-7">
-          <div className="flex max-w-[560px] flex-col gap-[18px]">
+          <div data-reveal className="flex max-w-[560px] flex-col gap-[18px]">
             <Eyebrow>Onze Behandelingen</Eyebrow>
             <h2
               id="behandelingen-title"
@@ -98,7 +104,7 @@ export function ServicesSection() {
               Behandelingen
             </h2>
           </div>
-          <div className="flex max-w-[440px] flex-col gap-5">
+          <div data-reveal className="flex max-w-[440px] flex-col gap-5">
             <p className="text-base leading-[1.65] text-pretty text-muted">
               Of u nu verlichting zoekt voor spierspanning, wilt ontsnappen aan een drukke week of zichzelf
               wilt verwennen: elke behandeling wordt afgestemd op wat uw lichaam nodig heeft.
@@ -116,11 +122,9 @@ export function ServicesSection() {
           <AdviceCard />
         </div>
 
-        <div className="-mt-6 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-x-8">
+        <div data-reveal="fade" className="-mt-6 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-x-8">
           <CancellationNote />
-          <p className="text-[13px] text-muted-2">
-            U kiest de duur van uw behandeling bij het boeken.
-          </p>
+          <p className="text-[13px] text-muted-2">U kiest de duur van uw behandeling bij het boeken.</p>
         </div>
       </div>
     </section>

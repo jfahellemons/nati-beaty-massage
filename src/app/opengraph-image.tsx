@@ -42,7 +42,7 @@ export default async function OpengraphImage() {
       >
         {site.tagline}
       </div>
-      <div style={{ display: "flex", fontSize: 30, color: "#E9CFAE", fontStyle: "italic", marginTop: 10 }}>
+      <div style={{ display: "flex", fontSize: 30, color: "#E9CFAE", marginTop: 10 }}>
         Massage &amp; pedicure in {site.city}
       </div>
     </div>,

@@ -17,7 +17,7 @@ export async function ReviewsSection() {
       className="bg-ivory px-[clamp(20px,5vw,64px)] py-[clamp(72px,9vw,120px)]"
     >
       <div className="mx-auto flex max-w-[1192px] flex-col gap-12">
-        <div className="flex flex-col gap-[18px]">
+        <div data-reveal className="flex flex-col gap-[18px]">
           <Eyebrow>Ervaringen</Eyebrow>
           <h2
             id="ervaringen-title"
@@ -29,10 +29,10 @@ export async function ReviewsSection() {
 
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] gap-5">
           {reviews.map((r) => (
-            <li key={r.id}>
+            <li key={r.id} data-reveal>
               <figure className="flex h-full flex-col gap-5 rounded-card border border-line-soft bg-cream p-7">
-                <Stars rating={r.rating} className="text-bronze" />
-                <blockquote className="flex-1 font-serif text-[21px] leading-snug text-pretty text-ink italic">
+                <Stars rating={r.rating} className="stars-fill text-bronze" />
+                <blockquote className="flex-1 font-serif text-[21px] leading-snug text-pretty text-ink">
                   “{r.text}”
                 </blockquote>
                 <figcaption className="flex flex-col gap-0.5 border-t border-line-softer pt-4">
@@ -44,13 +44,25 @@ export async function ReviewsSection() {
           ))}
         </ul>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          data-reveal="fade"
+          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
           <p className="max-w-[560px] text-[13px] leading-relaxed text-muted-2">
             Reviews worden geschreven door cliënten na hun behandeling en door Nataly gecontroleerd voordat ze
             online komen.
           </p>
-          <Link href="/review" className="flex items-center gap-2 text-sm hover:text-bronze-darkest">
-            Bent u bij Nataly geweest? Deel uw ervaring <Icon name="arrow" size={13} strokeWidth={2} />
+          <Link
+            href="/review"
+            className="group/link flex items-center gap-2 text-sm hover:text-bronze-darkest"
+          >
+            Bent u bij Nataly geweest? Deel uw ervaring{" "}
+            <Icon
+              name="arrow"
+              size={13}
+              strokeWidth={2}
+              className="transition-transform duration-300 ease-soft group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+            />
           </Link>
         </div>
       </div>

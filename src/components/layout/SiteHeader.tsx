@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { nav, site } from "@/content/site";
 import { cn } from "@/lib/cn";
 import { OpenBookingButton } from "@/components/booking/BookButton";
+import { delay } from "@/components/motion/delay";
 import { Logo } from "./Logo";
 
 /**
@@ -14,6 +15,10 @@ import { Logo } from "./Logo";
 export function SiteHeader({ overlay = false, current }: { overlay?: boolean; current?: string }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Hover highlight that slides between desktop nav items.
+  const [pill, setPill] = useState<{ x: number; w: number; on: boolean }>({ x: 0, w: 0, on: false });
+  const showPill = (el: HTMLElement) => setPill({ x: el.offsetLeft, w: el.offsetWidth, on: true });
+  const hidePill = () => setPill((p) => ({ ...p, on: false }));
   const sentinel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,14 +45,14 @@ export function SiteHeader({ overlay = false, current }: { overlay?: boolean; cu
       <header
         data-solid={solid}
         className={cn(
-          "inset-x-0 top-0 z-50 border-b backdrop-blur-[14px] transition-[background-color,border-color] duration-300",
+          "inset-x-0 top-0 z-50 border-b backdrop-blur-[14px] transition-[background-color,border-color] duration-500 ease-soft",
           overlay ? "fixed" : "sticky",
           solid ? "border-line bg-cream/92" : "border-transparent bg-transparent",
         )}
       >
         <div
           className={cn(
-            "mx-auto flex max-w-[1320px] items-center justify-between gap-5 px-[clamp(20px,4vw,48px)] transition-[padding] duration-300",
+            "mx-auto flex max-w-[1320px] items-center justify-between gap-5 px-[clamp(20px,4vw,48px)] transition-[padding] duration-500 ease-soft",
             solid ? "py-3" : "py-[22px]",
           )}
         >
@@ -62,18 +67,30 @@ export function SiteHeader({ overlay = false, current }: { overlay?: boolean; cu
           <div className="hidden items-center gap-3 md:flex">
             <nav
               aria-label="Hoofdmenu"
+              onMouseLeave={hidePill}
+              onBlur={hidePill}
               className={cn(
-                "flex items-center gap-1 rounded-full border p-1.5",
+                "relative flex items-center gap-1 rounded-full border p-1.5",
                 solid ? "border-line bg-ink/4" : "border-ivory/22 bg-ivory/10",
               )}
             >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "absolute top-1.5 bottom-1.5 left-0 rounded-full bg-bronze/18 transition-[translate,width,opacity] duration-400 ease-soft",
+                  pill.on ? "opacity-100" : "opacity-0",
+                )}
+                style={{ translate: `${pill.x}px 0`, width: pill.w }}
+              />
               {nav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   aria-current={current === item.href ? "page" : undefined}
+                  onMouseEnter={(e) => showPill(e.currentTarget)}
+                  onFocus={(e) => showPill(e.currentTarget)}
                   className={cn(
-                    "rounded-full px-[18px] py-2.5 text-sm transition-colors hover:bg-bronze/18",
+                    "relative rounded-full px-[18px] py-2.5 text-sm transition-colors",
                     solid ? "text-ink hover:text-ink" : "text-ivory hover:text-ivory",
                     current === item.href && "bg-bronze/18",
                   )}
@@ -115,24 +132,34 @@ export function SiteHeader({ overlay = false, current }: { overlay?: boolean; cu
           </button>
         </div>
 
-        {menuOpen && (
-          <nav
-            id="mobile-menu"
-            aria-label="Mobiel menu"
-            className="flex flex-col border-t border-line bg-cream px-5 pt-3 pb-6 md:hidden"
-          >
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMenuOpen(false)}
-                className="border-b border-line px-1 py-4 text-lg text-ink hover:text-ink"
-              >
-                {item.label}
-              </Link>
-            ))}
+        {/* Stays mounted so it can fold open and closed (grid rows 0fr ↔ 1fr). */}
+        <div
+          id="mobile-menu"
+          inert={!menuOpen}
+          className={cn(
+            "grid transition-[grid-template-rows] duration-500 ease-soft md:hidden",
+            menuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          )}
+        >
+          <nav aria-label="Mobiel menu" className="min-h-0 overflow-hidden">
+            <div className="flex flex-col border-t border-line bg-cream px-5 pt-3 pb-6">
+              {nav.map((item, i) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                  style={delay(120 + i * 60)}
+                  className={cn(
+                    "border-b border-line px-1 py-4 text-lg text-ink hover:text-ink",
+                    menuOpen && "animate-fade-up",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </nav>
-        )}
+        </div>
       </header>
     </>
   );

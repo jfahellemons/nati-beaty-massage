@@ -15,7 +15,14 @@ export function Stars({
   return (
     <span role="img" aria-label={`${rating} van 5 sterren`} className={cn("flex gap-0.5", className)}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <svg key={n} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+        <svg
+          key={n}
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          style={{ "--n": n } as React.CSSProperties}
+        >
           <path
             d={STAR_PATH}
             fill={n <= rating ? "currentColor" : "none"}

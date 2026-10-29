@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { Icon } from "@/components/ui/Icon";
 
@@ -34,6 +35,14 @@ export function MonthCalendar({
   onMonth,
   onSelect,
 }: Props) {
+  // Days slide in from the side of the arrow that was pressed.
+  const [shownMonth, setShownMonth] = useState(month);
+  const [direction, setDirection] = useState<"forward" | "back" | null>(null);
+  if (month !== shownMonth) {
+    setShownMonth(month);
+    setDirection(month > shownMonth ? "forward" : "back");
+  }
+
   const [y, m] = month.split("-").map(Number);
   const first = new Date(Date.UTC(y, m - 1, 1));
   const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
@@ -66,9 +75,15 @@ export function MonthCalendar({
       </div>
 
       <div
+        key={month}
         role="grid"
         aria-busy={loading}
-        className={cn("grid grid-cols-7 gap-1 text-center", loading && "opacity-50")}
+        className={cn(
+          "grid grid-cols-7 gap-1 text-center transition-opacity duration-300",
+          loading && "opacity-50",
+          direction === "forward" && "animate-step-forward",
+          direction === "back" && "animate-step-back",
+        )}
       >
         {weekdays.map((d) => (
           <span key={d} role="columnheader" className="py-1 text-xs text-muted-2">

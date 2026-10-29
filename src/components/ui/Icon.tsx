@@ -25,9 +25,11 @@ type IconProps = {
   size?: number;
   strokeWidth?: number;
   className?: string;
+  /** Draws its outline when revealed (inside a `data-reveal` element). */
+  draw?: boolean;
 };
 
-export function Icon({ name, d, size = 20, strokeWidth = 1.6, className }: IconProps) {
+export function Icon({ name, d, size = 20, strokeWidth = 1.6, className, draw }: IconProps) {
   return (
     <svg
       width={size}
@@ -40,9 +42,9 @@ export function Icon({ name, d, size = 20, strokeWidth = 1.6, className }: IconP
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
-      className={cn("shrink-0", className)}
+      className={cn("shrink-0", draw && "icon-draw", className)}
     >
-      <path d={d ?? (name ? icons[name] : "")} />
+      <path d={d ?? (name ? icons[name] : "")} pathLength={draw ? 1 : undefined} />
     </svg>
   );
 }

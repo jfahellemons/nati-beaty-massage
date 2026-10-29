@@ -31,7 +31,7 @@ const sizes: Record<PillSize, { root: string; circle: string; icon: number }> = 
 /** Class names for the design's signature pill button (label + arrow circle). */
 export function pillClass(variant: PillVariant, size: PillSize, className?: string) {
   return cn(
-    "inline-flex cursor-pointer items-center rounded-full font-medium whitespace-nowrap transition-colors duration-200",
+    "group/pill inline-flex cursor-pointer items-center rounded-full font-medium whitespace-nowrap transition-[color,background-color,border-color,scale] duration-200 ease-soft active:scale-[0.98]",
     root[variant],
     sizes[size].root,
     className,
@@ -57,7 +57,12 @@ export function PillContent({
           circle[variant],
         )}
       >
-        <Icon name="arrow" size={sizes[size].icon} strokeWidth={2} />
+        <Icon
+          name="arrow"
+          size={sizes[size].icon}
+          strokeWidth={2}
+          className="transition-transform duration-300 ease-soft group-hover/pill:translate-x-0.5 group-hover/pill:-translate-y-0.5"
+        />
       </span>
     </>
   );

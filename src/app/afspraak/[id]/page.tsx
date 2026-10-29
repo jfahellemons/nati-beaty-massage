@@ -11,6 +11,7 @@ import { MinimalFooter } from "@/components/layout/SiteFooter";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PillLink } from "@/components/ui/PillLink";
 import { CancelOwnBooking } from "./CancelOwnBooking";
+import { PageTransition } from "@/components/motion/PageTransition";
 
 export const metadata: Metadata = {
   title: "Uw afspraak",
@@ -114,14 +115,16 @@ export default function OwnBookingPage(props: PageProps<"/afspraak/[id]">) {
   return (
     <div className="overflow-x-clip">
       <SiteHeader />
-      <main id="main" className="px-[clamp(20px,5vw,64px)] pt-[clamp(48px,7vw,96px)]">
-        <div className="mx-auto flex max-w-[620px] flex-col gap-5">
-          <Eyebrow>Nataly Beauty Massages</Eyebrow>
-          <Suspense fallback={<p className="text-muted">Laden…</p>}>
-            <Booking {...props} />
-          </Suspense>
-        </div>
-      </main>
+      <PageTransition>
+        <main id="main" className="px-[clamp(20px,5vw,64px)] pt-[clamp(48px,7vw,96px)]">
+          <div className="mx-auto flex max-w-[620px] flex-col gap-5">
+            <Eyebrow>Nataly Beauty Massages</Eyebrow>
+            <Suspense fallback={<p className="text-muted">Laden…</p>}>
+              <Booking {...props} />
+            </Suspense>
+          </div>
+        </main>
+      </PageTransition>
       <MinimalFooter />
     </div>
   );

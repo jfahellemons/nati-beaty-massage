@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   images: {
-    qualities: [75],
+    qualities: [90],
   },
   turbopack: {
     root: process.cwd(),
