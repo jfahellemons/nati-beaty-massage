@@ -119,7 +119,7 @@ export function ServicesSection() {
         <div className="-mt-6 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-x-8">
           <CancellationNote />
           <p className="text-[13px] text-muted-2">
-            Alle prijzen zijn inclusief BTW. U kiest de duur van uw behandeling bij het boeken.
+            U kiest de duur van uw behandeling bij het boeken.
           </p>
         </div>
       </div>

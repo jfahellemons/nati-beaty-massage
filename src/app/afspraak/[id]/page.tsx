@@ -78,7 +78,7 @@ async function Booking({ params, searchParams }: PageProps<"/afspraak/[id]">) {
               `${formatDay(booking.starts_at)}, ${formatTime(booking.starts_at)}–${formatTime(booking.ends_at)}`,
             ],
             ["Duur", `${booking.duration_min} minuten`],
-            ["Prijs", `€${Number(booking.price_eur).toFixed(0)} (incl. btw)`],
+            ["Prijs", `€${Number(booking.price_eur).toFixed(0)}`],
             ["Naam", `${booking.first_name} ${booking.last_name}`],
             ...(booking.status === "confirmed"
               ? [["Locatie", `${site.city} (adres staat in uw bevestigingsmail)`]]

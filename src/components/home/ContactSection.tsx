@@ -11,7 +11,6 @@ type Contact = { label: string; value: string; icon: keyof typeof icons; href?: 
 const contacts: Contact[] = [
   { label: "Bel of app", value: site.phone.display, icon: "phone", href: site.phone.href },
   { label: "E-mailadres", value: site.email, icon: "mail", href: `mailto:${site.email}` },
-  { label: site.hours.label, value: site.hours.display, icon: "clock" },
   { label: "Locatie", value: site.city, icon: "pin" },
   {
     label: "Instagram",

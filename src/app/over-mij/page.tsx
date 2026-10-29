@@ -11,7 +11,7 @@ import { OpenBookingButton } from "@/components/booking/BookButton";
 export const metadata: Metadata = {
   title: "Over Mij",
   description:
-    "Maak kennis met Nataly: 10 jaar ervaring in de wellnesssector en een eigen salon in Oosterhout.",
+    "Maak kennis met Nataly: 10 jaar ervaring in de wellnesssector, in Oosterhout.",
   alternates: { canonical: "/over-mij" },
 };
 
@@ -82,10 +82,6 @@ export default function AboutPage() {
                 <div className="flex flex-col-reverse gap-1">
                   <dt className="text-[13px] text-muted-2">jaar ervaring</dt>
                   <dd className="font-serif text-[44px] leading-none">10</dd>
-                </div>
-                <div className="flex flex-col-reverse gap-1">
-                  <dt className="text-[13px] text-muted-2">eigen salon</dt>
-                  <dd className="font-serif text-[44px] leading-none">{site.city}</dd>
                 </div>
               </dl>
             </div>

@@ -13,7 +13,7 @@ export type Service = {
   slug: string;
   title: string;
   description: string;
-  /** Price in euros (incl. BTW) per offered duration. Source: official price list. */
+  /** Price in euros per offered duration. Source: official price list. */
   prices: Partial<Record<Duration, number>>;
   image: StaticImageData;
   imageAlt: string;

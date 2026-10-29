@@ -484,7 +484,7 @@ export function BookingFlow({
                     ["Behandeling", service.title],
                     ["Duur", `${duration} minuten`],
                     ["Wanneer", `${fmtDate(date)}, ${time}`],
-                    ["Prijs", `€${price} (incl. btw)`],
+                    ["Prijs", `€${price}`],
                     ["Naam", `${details.firstName} ${details.lastName}`],
                     ["Contact", `${details.email} · ${details.phone}`],
                   ] as const

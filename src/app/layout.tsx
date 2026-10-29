@@ -52,12 +52,6 @@ const jsonLd = {
   image: `${site.url}/opengraph-image`,
   priceRange: "€35 – €95",
   address: { "@type": "PostalAddress", addressLocality: site.city, addressCountry: "NL" },
-  openingHoursSpecification: {
-    "@type": "OpeningHoursSpecification",
-    dayOfWeek: site.hours.days,
-    opens: site.hours.opens,
-    closes: site.hours.closes,
-  },
   sameAs: [site.instagram.url],
   makesOffer: services.map((s) => ({
     "@type": "Offer",
@@ -66,7 +60,6 @@ const jsonLd = {
       "@type": "PriceSpecification",
       minPrice: lowestPrice(s),
       priceCurrency: "EUR",
-      valueAddedTaxIncluded: true,
     },
   })),
 };

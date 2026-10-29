@@ -16,13 +16,6 @@ export const site = {
     number: "31619800612",
     message: "Hallo Nataly, ik wil graag een afspraak maken.",
   },
-  hours: {
-    label: "Openingstijden (ma t/m za)",
-    display: "09:00 – 21:00",
-    days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    opens: "09:00",
-    closes: "21:00",
-  },
   instagram: {
     handle: "@beautymassagesnataly",
     url: "https://www.instagram.com/beautymassagesnataly",

@@ -65,7 +65,6 @@ export function SiteFooter({ withMobileBar = false }: { withMobileBar?: boolean 
             <a href={`mailto:${site.email}`} className={cn(link, "break-all")}>
               {site.email}
             </a>
-            <span className="text-sm">Ma t/m za {site.hours.display}</span>
             <span className="text-sm">{site.city}</span>
             <a href={site.instagram.url} target="_blank" rel="noopener noreferrer" className={link}>
               Instagram {site.instagram.handle}

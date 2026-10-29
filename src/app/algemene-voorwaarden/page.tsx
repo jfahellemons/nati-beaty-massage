@@ -44,7 +44,7 @@ export default function TermsPage() {
 
       <h2>Prijzen en betaling</h2>
       <ul>
-        <li>Alle prijzen zijn in euro&apos;s en inclusief BTW.</li>
+        <li>Alle prijzen zijn in euro&apos;s.</li>
         <li>De prijs hangt af van de behandeling en de duur die u kiest.</li>
       </ul>
 

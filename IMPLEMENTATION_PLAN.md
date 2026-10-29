@@ -28,7 +28,6 @@ Domain: **natalybeautymassages.nl** · Booking: **own reservation system** (no C
 | Approval | **Nataly approves every booking first.** A booking is a request until she accepts it |
 | Durations | **The client chooses the duration** (30 / 60 / 75 / 90 min, where offered) and sees the price per duration while booking |
 | Cancellation | **Cancelling is possible online up to 24 hours before the appointment**, enforced by the system; after that, clients are pointed to WhatsApp/phone |
-| VAT | All prices **incl. BTW** |
 | Prices on the site | Service cards show **"vanaf €…"**; the exact price per duration appears in the booking flow |
 | Services | 6 services (§0.1). Zwangerschapsmassage and Lifting wimpers are **excluded** |
 | Reviews | Review form on the website; Nataly approves in the management app; shown as **first name + initial**; **no email field** |
