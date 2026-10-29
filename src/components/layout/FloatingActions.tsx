@@ -27,7 +27,7 @@ export function WhatsAppFab({ raised = false }: { raised?: boolean }) {
       rel="noopener noreferrer"
       aria-label="Stuur een WhatsApp-bericht"
       className={cn(
-        "fixed right-5 z-70 flex size-[58px] items-center justify-center rounded-full bg-whatsapp text-white shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition-transform duration-200 hover:scale-106 hover:text-white",
+        "fixed right-5 z-70 flex size-[58px] items-center justify-center rounded-full bg-bronze text-white shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition-[transform,background-color] duration-200 hover:scale-106 hover:bg-bronze-deep hover:text-white",
         raised ? "bottom-[calc(86px+env(safe-area-inset-bottom))] md:bottom-6" : "bottom-6",
       )}
     >
