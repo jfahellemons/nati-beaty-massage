@@ -61,6 +61,19 @@ function addMonths(month: string, delta: number) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+/** Spinner + label for live availability that is still loading. */
+function Loading({ children }: { children: React.ReactNode }) {
+  return (
+    <p role="status" className="flex items-center justify-center gap-3 py-10 text-muted">
+      <span
+        aria-hidden
+        className="size-5 animate-spin rounded-full border-2 border-line border-t-bronze-deep"
+      />
+      {children}
+    </p>
+  );
+}
+
 /**
  * The booking dialog: service → duration → date → time → details → review → done.
  * Free days and times come live from the shared database (rules set in the management app).
@@ -394,14 +407,14 @@ export function BookingFlow({
                   )}
                 </>
               ) : (
-                <p className="text-muted">Beschikbaarheid laden…</p>
+                <Loading>Beschikbaarheid laden…</Loading>
               ))}
 
             {step === "time" && date && (
               <>
                 <p className="text-[15px] text-muted first-letter:uppercase">{fmtDate(date)}</p>
                 {slots === null ? (
-                  <p className="text-muted">Tijden laden…</p>
+                  <Loading>Tijden laden…</Loading>
                 ) : slots.length === 0 ? (
                   <p className="text-sm text-muted">
                     Op deze dag zijn geen tijden meer vrij. Kies een andere datum.
