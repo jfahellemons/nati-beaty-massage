@@ -56,7 +56,7 @@ const jsonLd = {
   sameAs: [site.instagram.url],
   makesOffer: services.map((s) => ({
     "@type": "Offer",
-    itemOffered: { "@type": "Service", name: s.title, description: s.description },
+    itemOffered: { "@type": "Service", name: s.title, description: [s.tagline, ...s.description].join(" ") },
     priceSpecification: {
       "@type": "PriceSpecification",
       minPrice: lowestPrice(s),

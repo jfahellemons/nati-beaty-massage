@@ -1,56 +1,10 @@
-import Image from "next/image";
-import { durationLabel, hasRange, lowestPrice, services, type Service } from "@/content/services";
 import { whatsappUrl } from "@/content/site";
 import { Accent, Eyebrow } from "@/components/ui/Eyebrow";
 import { Icon } from "@/components/ui/Icon";
 import { PillLink } from "@/components/ui/PillLink";
 import { CancellationNote } from "@/components/ui/CancellationNote";
-import { BookButton, OpenBookingButton } from "@/components/booking/BookButton";
-
-function ServiceCard({ service }: { service: Service }) {
-  return (
-    <article
-      data-reveal
-      className="group flex flex-col rounded-card border border-line-soft bg-ivory p-2.5 transition-[box-shadow,translate] duration-500 ease-soft [@media(hover:hover)]:hover:-translate-y-[3px] [@media(hover:hover)]:hover:shadow-card-hover"
-    >
-      <div className="relative h-[200px] shrink-0 overflow-hidden rounded-[18px] bg-line">
-        <Image
-          src={service.image}
-          alt={service.imageAlt}
-          fill
-          sizes="(min-width: 1100px) 280px, (min-width: 640px) 45vw, 100vw"
-          placeholder="blur"
-          className="object-cover transition-[scale] duration-700 ease-soft [@media(hover:hover)]:group-hover:scale-105"
-        />
-        <span className="absolute top-3 left-3 flex size-[42px] items-center justify-center rounded-full bg-ivory text-bronze-deep shadow-[0_4px_14px_rgba(42,33,28,.1)]">
-          <Icon d={service.icon} size={20} strokeWidth={1.4} />
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col gap-3 px-3.5 pt-5 pb-3">
-        <h3 className="text-[19px] leading-tight font-medium">{service.title}</h3>
-        <p className="flex-1 text-sm leading-relaxed text-pretty text-muted">{service.description}</p>
-        <div className="flex items-end justify-between gap-2.5 border-t border-line-softer pt-3.5">
-          <span className="flex items-center gap-[7px] text-[13px] text-muted-2">
-            <Icon name="clock" size={15} className="text-bronze-deep" />
-            {durationLabel(service)}
-          </span>
-          <span className="flex items-baseline gap-1.5 leading-none">
-            {hasRange(service) && <span className="text-[13px] text-muted-2">vanaf</span>}
-            <span className="font-serif text-[26px] text-ink">€{lowestPrice(service)}</span>
-          </span>
-        </div>
-        <BookButton
-          slug={service.slug}
-          variant="outline-soft"
-          size="sm"
-          className="mt-1.5 self-start font-normal"
-        >
-          Boek Nu<span className="sr-only">: {service.title}</span>
-        </BookButton>
-      </div>
-    </article>
-  );
-}
+import { OpenBookingButton } from "@/components/booking/BookButton";
+import { ServiceCards } from "./ServiceCards";
 
 function AdviceCard() {
   return (
@@ -115,12 +69,9 @@ export function ServicesSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {services.map((service) => (
-            <ServiceCard key={service.slug} service={service} />
-          ))}
+        <ServiceCards>
           <AdviceCard />
-        </div>
+        </ServiceCards>
 
         <div data-reveal="fade" className="-mt-6 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-x-8">
           <CancellationNote />

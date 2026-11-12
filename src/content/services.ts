@@ -12,7 +12,10 @@ export type Service = {
   /** Stable id, also stored on bookings (service_slug) in the shared database. */
   slug: string;
   title: string;
-  description: string;
+  /** Short lead line shown above the description. */
+  tagline: string;
+  /** One string per paragraph. */
+  description: string[];
   /** Price in euros per offered duration. Source: official price list. */
   prices: Partial<Record<Duration, number>>;
   image: StaticImageData;
@@ -25,7 +28,11 @@ export const services: Service[] = [
   {
     slug: "therapeutische-massage",
     title: "Therapeutische massage",
-    description: "Gerichte behandeling voor diepere spierverlichting en spanningsafbouw.",
+    tagline: "Gerichte aandacht voor spierknopen en opgebouwde spanning.",
+    description: [
+      "Een complete lichaamsmassage met extra aandacht voor de rug. Met stevigere en gerichte massagetechnieken behandel ik vastzittende spieren en spierknopen. Ook de benen en voeten worden meegenomen in de behandeling.",
+      "Ik combineer diepere massagetechnieken met ontspannende bewegingen, zodat het lichaam weer tot rust kan komen.",
+    ],
     prices: { 30: 40, 60: 60, 75: 70, 90: 95 },
     image: imgTherapeutisch,
     imageAlt: "Therapeutische massage van de rug",
@@ -33,8 +40,11 @@ export const services: Service[] = [
   },
   {
     slug: "volledige-lichaamsmassage",
-    title: "Ontspannende volledige lichaamsmassage",
-    description: "Ervaar diepe rust van top tot teen met een rustgevende oliemassage.",
+    title: "Ontspanningsmassage",
+    tagline: "Laat de dagelijkse stress los en geniet van pure ontspanning.",
+    description: [
+      "Een zachte lichaamsmassage met rustgevende muziek, verkoelende waterballen, zachte veren en een heerlijke hoofdmassage met speciale massagetools. Een unieke zintuiglijke ervaring om lichaam en geest tot rust te brengen.",
+    ],
     prices: { 30: 40, 60: 55, 75: 65, 90: 90 },
     image: imgVolledig,
     imageAlt: "Ontspannende oliemassage van het hele lichaam",
@@ -42,8 +52,11 @@ export const services: Service[] = [
   },
   {
     slug: "craniofaciale-massage",
-    title: "Ontspannende craniofaciale massage",
-    description: "Subtiele, zachte druktechnieken om stress en spanning in hoofd en nek te verminderen.",
+    title: "Craniofaciale Ontspanningsritueel",
+    tagline: "Een bijzonder ritueel om helemaal tot jezelf te komen.",
+    description: [
+      "Een sensorische ontspanningservaring voor het hoofd, de hoofdhuid en het gezicht, met zachte massagetechnieken, rustgevende geluiden en speciale ontspanningsaccessoires zoals massagekammen en hoofdhuidtools.",
+    ],
     prices: { 30: 35, 60: 55, 75: 65, 90: 90 },
     image: imgCranio,
     imageAlt: "Nataly masseert het hoofd van een cliënt",
@@ -52,7 +65,10 @@ export const services: Service[] = [
   {
     slug: "rug-nek-schoudermassage",
     title: "Rug-, nek- en schoudermassage",
-    description: "Focus op de meest voorkomende stressplekken voor directe verlichting.",
+    tagline: "Geef spanning in je rug, nek en schouders de aandacht die het verdient.",
+    description: [
+      "Een gerichte massage om opgebouwde spanning en vastzittende spieren te helpen verlichten. Met gerichte massagetechnieken, ontspannende bewegingen en warme handdoeken creëer ik een heerlijk ontspannen gevoel en een moment van rust.",
+    ],
     prices: { 30: 35, 60: 50, 75: 65 },
     image: imgRug,
     imageAlt: "Massage van rug, nek en schouders",
@@ -61,7 +77,10 @@ export const services: Service[] = [
   {
     slug: "benen-voetenmassage",
     title: "Benen- en voetenmassage",
-    description: "Revitaliseer vermoeide benen en voeten, perfect na een lange dag.",
+    tagline: "Geef vermoeide benen en voeten een moment van verlichting.",
+    description: [
+      "Een ontspannende massage gericht op de kuiten en voetzolen, om opgebouwde spanning en vermoeidheid te helpen verminderen en je benen weer heerlijk ontspannen te laten voelen.",
+    ],
     prices: { 30: 35, 60: 50, 75: 65 },
     image: imgBenen,
     imageAlt: "Massage van benen en voeten",
@@ -69,8 +88,11 @@ export const services: Service[] = [
   },
   {
     slug: "pedicure-spa",
-    title: "Pedicure SPA",
-    description: "Luxe voetverzorging inclusief scrub, massage en nagelstyling.",
+    title: "Pedicure Spa",
+    tagline: "Meer dan een pedicure: complete verzorging voor je voeten.",
+    description: [
+      "Inclusief het verwijderen van eelt en harde plekjes, nagelriemverzorging, exfoliatie, nagellak en een ontspannende voetmassage.",
+    ],
     prices: { 60: 60 },
     image: imgPedicure,
     imageAlt: "Verzorgende pedicure behandeling",
@@ -82,7 +104,8 @@ export function getService(slug: string | null | undefined) {
   return services.find((s) => s.slug === slug);
 }
 
-function offered(service: Service) {
+/** Offered durations with their price, shortest first. */
+export function offered(service: Service) {
   return (Object.entries(service.prices) as [string, number][])
     .map(([min, price]) => ({ min: Number(min) as Duration, price }))
     .sort((a, b) => a.min - b.min);

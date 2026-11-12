@@ -23,7 +23,14 @@ function Content({ children, variant, size }: Pick<Common, "children" | "variant
 }
 
 /** Books one service: opens the booking dialog at the duration/date step. */
-export function BookButton({ slug, children, className, variant, size = "sm" }: Common & { slug: string }) {
+export function BookButton({
+  slug,
+  children,
+  className,
+  variant,
+  size = "sm",
+  onBeforeBook,
+}: Common & { slug: string; /** E.g. close another dialog first. */ onBeforeBook?: () => void }) {
   const { book } = useBooking();
   return (
     <Link
@@ -31,6 +38,7 @@ export function BookButton({ slug, children, className, variant, size = "sm" }: 
       onClick={(e) => {
         if (e.metaKey || e.ctrlKey || e.shiftKey) return;
         e.preventDefault();
+        onBeforeBook?.();
         book(slug);
       }}
       aria-haspopup="dialog"
